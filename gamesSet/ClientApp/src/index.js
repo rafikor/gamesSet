@@ -1,26 +1,38 @@
-import 'bootstrap/dist/css/bootstrap.css';
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App';
-import * as serviceWorkerRegistration from './serviceWorkerRegistration';
-import reportWebVitals from './reportWebVitals';
+import React from "react";
+import { render } from 'https://cdn.skypack.dev/react-dom'
 
-const baseUrl = document.getElementsByTagName('base')[0].getAttribute('href');
-const rootElement = document.getElementById('root');
-const root = createRoot(rootElement);
+import "./custom.css"
 
-root.render(
-  <BrowserRouter basename={baseUrl}>
-    <App />
-  </BrowserRouter>);
+const styleSquare = {
+	background: "lightblue",
+	border: "2px solid darkblue",
+	fontSize: "30px",
+	fontWeight: "800",
+	cursor: "pointer",
+	outline: "none",
+};
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://cra.link/PWA
-serviceWorkerRegistration.unregister();
+const Square = ({ value, onClick }) => (
+	<button style={styleSquare} onClick={onClick}>
+		{value}
+	</button>
+);
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+const Game = ({ onClick}) => (
+	<div>
+		<Square value="1" onClick={() => onClick("dummy value")} />
+		<Square value="2" onClick={() => onClick("dummy value")} />
+		<Square value="3" onClick={() => onClick("dummy value")} />
+		<Square value="4" onClick={() => onClick("dummy value")} />
+		<Square value="5" onClick={() => onClick("dummy value")} />
+		<Square value="6" onClick={() => onClick("dummy value")} />
+		<Square value="7" onClick={() => onClick("dummy value")} />
+		<Square value="8" onClick={() => onClick("dummy value")} />
+		<Square value="9" onClick={() => onClick("dummy value")} />
+	</div>
+
+);
+
+const voidFunc = () => { };
+
+render(<Game onClick={voidFunc} />, document.getElementById('app'))
