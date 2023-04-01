@@ -7,22 +7,23 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using gamesSet.Data;
 using gamesSet.Models;
+using Newtonsoft.Json;
 
 namespace gamesSet.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class GameSessionsController : ControllerBase
+    public class GameSessionsController : Controller
     {
         private readonly gamesSetContext _context;
+        private readonly ILogger<GameSessionsController> _logger;
 
-        public GameSessionsController(gamesSetContext context)
+        public GameSessionsController(gamesSetContext context, ILogger<GameSessionsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/GameSessions
-        [HttpGet]
+//        [HttpGet]
         public async Task<ActionResult<IEnumerable<GameSession>>> GetGameSession()
         {
           if (_context.GameSession == null)
@@ -33,7 +34,7 @@ namespace gamesSet.Controllers
         }
 
         // GET: api/GameSessions/5
-        [HttpGet("{id}")]
+        //[HttpGet("{id}")]
         public async Task<ActionResult<GameSession>> GetGameSession(int id)
         {
           if (_context.GameSession == null)
@@ -52,7 +53,7 @@ namespace gamesSet.Controllers
 
         // PUT: api/GameSessions/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
+        //[HttpPut("{id}")]
         public async Task<IActionResult> PutGameSession(int id, GameSession gameSession)
         {
             if (id != gameSession.Id)
@@ -81,23 +82,48 @@ namespace gamesSet.Controllers
             return NoContent();
         }
 
-        // POST: api/GameSessions
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<GameSession>> PostGameSession(GameSession gameSession)
+        private async Task AddGameSession(GameSession gameSession)
         {
           if (_context.GameSession == null)
           {
-              return Problem("Entity set 'gamesSetContext.GameSession'  is null.");
+              throw new Exception("Entity set 'gamesSetContext.GameSession'  is null.");
           }
             _context.GameSession.Add(gameSession);
             await _context.SaveChangesAsync();
+        }
 
-            return CreatedAtAction("GetGameSession", new { id = gameSession.Id }, gameSession);
+        // POST: api/GameSessions
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpGet]
+        public IActionResult CreateSessionByUser(string userName="", int gameId=0)
+        {
+            var gameSession = new GameSession();
+
+            gameSession.UserCreator = userName;
+            gameSession.status = SessionStatus.created;
+            gameSession.creationTime = DateTime.Now;
+
+            var gameParams = new Dictionary<string, object>
+            {
+                { "gameId", gameId }
+            };
+
+            gameSession.GameParams = JsonConvert.SerializeObject(gameParams);
+            AddGameSession(gameSession);
+
+            //TODO: remove from here
+            string gameAddress = gameId switch
+            {
+                0 =>"tictactoe",
+                1 => "labyrinth",
+                _ =>"error"
+            };
+
+            return Redirect($"/{gameAddress}?sessionid={gameSession.Id}&playerName={userName}");
         }
 
         // DELETE: api/GameSessions/5
-        [HttpDelete("{id}")]
+        //[HttpDelete("{id}")]
         public async Task<IActionResult> DeleteGameSession(int id)
         {
             if (_context.GameSession == null)
