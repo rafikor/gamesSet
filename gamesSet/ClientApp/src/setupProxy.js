@@ -9,16 +9,18 @@ const context =  [
     "/GameSessions",
     "/tictactoe.html",
     "/counter",
-    "/fetch-data"
+    "/fetch-data",
+    "/TicTacToeHub"
 ];
 
 module.exports = function(app) {
   const appProxy = createProxyMiddleware(context, {
     target: target,
     secure: false,
-    headers: {
-      Connection: 'Keep-Alive'
-    }
+      ws: true, // <-- Add this
+      //headers: { // <-- Remove this
+      //    Connection: "Keep-Alive", // <-- Remove this
+      //}, // <-- Remove this
   });
 
   app.use(appProxy);
