@@ -1,4 +1,8 @@
 import { useState } from 'react';
+import { useSearchParams } from "react-router-dom";
+//import { signalR } from './signalr.js/jquery.signalR';
+//import { signalR } from './microsoft-signalr/signalr';
+import { HubConnectionBuilder }  from '@microsoft/signalr';
 
 const styleButton = {
     background: "lightblue",
@@ -19,6 +23,7 @@ const style = {
     gridTemplate: "repeat(3, 1fr) / repeat(3, 1fr)",
 };
 
+
 function Square({ value, onSquareClick }) {
     return (
         <button className="square" style={ styleButton} onClick={onSquareClick}>
@@ -27,11 +32,12 @@ function Square({ value, onSquareClick }) {
     );
 }
 
-function Board({ xIsNext, squares, onPlay }) {
+function Board({ xIsNext, squares, onPlay, sendMove }) {
     function handleClick(i) {
         if (calculateWinner(squares) || squares[i]) {
             return;
         }
+        sendMove(i);
         const nextSquares = squares.slice();
         if (xIsNext) {
             nextSquares[i] = 'X';
@@ -68,6 +74,42 @@ function Board({ xIsNext, squares, onPlay }) {
 }
 
 export function Tictactoe() {
+    const [searchParams, setSearchParams] = useSearchParams(window.location.search);
+    const [userName, setUserName] = useState(searchParams.get("playerName"));
+    const [sessionId, setSessionId] = useState(searchParams.get("gameSessionId"));
+
+    //var connection = new HubConnectionBuilder().withUrl("/TicTacToeHub?userName=" + userName + "&sessionId=" + sessionId).build();
+    var connection = new HubConnectionBuilder().withUrl("/TicTacToeHub?userName=" + userName + "&gameSessionId=" + sessionId).build();
+    //var connection = new HubConnectionBuilder().withUrl("/TicTacToeHub").build();
+
+    connection.start({ withCredentials: false }).then(function () {
+        console.log('connected');
+    }).catch(function (err) {
+        return console.error(err.toString());
+    });
+
+    const sendMove = async (move) => {
+
+        //if (connection) {
+            try {
+                await connection.send('ReceiveMove', userName, sessionId, move);
+            }
+            catch (e) {
+                console.log(e);
+            }
+        /*}
+        else {
+            alert('No connection to server yet.');
+        }*/
+    }
+
+    connection.on("ReceiveState", function (stateJson) {
+        var stateJsonParsed = JSON.parse(stateJson);
+        //let userMove = userMoveJSON['userMove'];
+        console.log(stateJsonParsed);
+    });
+
+
     const [history, setHistory] = useState([Array(9).fill(null)]);
     const [currentMove, setCurrentMove] = useState(0);
     const xIsNext = currentMove % 2 === 0;
@@ -100,7 +142,7 @@ export function Tictactoe() {
     return (
         <div className="game">
             <div className="game-board">
-                <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
+                <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} sendMove={sendMove} />
             </div>
             <div className="game-info">
                 <ol>{moves}</ol>

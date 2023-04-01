@@ -119,7 +119,7 @@ namespace gamesSet.Controllers
                 _ =>"error"
             };
 
-            return Redirect($"/{gameAddress}?sessionid={gameSession.Id}&playerName={userName}");
+            return Redirect($"/{gameAddress}?gameSessionId={gameSession.Id}&playerName={userName}");
         }
 
         // DELETE: api/GameSessions/5
