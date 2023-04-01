@@ -1,4 +1,9 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using gamesSet.Data;
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<gamesSetContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("gamesSetContext") ?? throw new InvalidOperationException("Connection string 'gamesSetContext' not found.")));
 
 // Add services to the container.
 
