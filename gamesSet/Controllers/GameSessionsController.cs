@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using gamesSet.Data;
 using gamesSet.Models;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.SignalR;
+using gamesSet.Hubs;
 
 namespace gamesSet.Controllers
 {
@@ -15,11 +17,15 @@ namespace gamesSet.Controllers
     {
         private readonly gamesSetContext _context;
         private readonly ILogger<GameSessionsController> _logger;
+        private readonly IHubContext<TicTacToeHub> _hubContext;
+        private readonly IServiceProvider _sp;
 
-        public GameSessionsController(gamesSetContext context, ILogger<GameSessionsController> logger)
+        public GameSessionsController(gamesSetContext context, ILogger<GameSessionsController> logger, IHubContext<TicTacToeHub> hubContext, IServiceProvider sp)
         {
             _context = context;
             _logger = logger;
+            _hubContext = hubContext;
+            _sp = sp;
         }
 
         // GET: api/GameSessions
@@ -137,12 +143,11 @@ namespace gamesSet.Controllers
             var dataToSend = new Dictionary<int, Dictionary<string,string> > ();
             foreach (var session in newSessions)
             {
-                if((DateTime.Now - session.CreationTime).TotalMinutes>5)//TODO
+                new TicTacToeHub(_hubContext,_sp).CheckExpiredWaitingSession(session);
+                if(session.Status == SessionStatus.cancelled)
                 {
-                    session.Status= SessionStatus.cancelled;
-                    _context.GameSession.Update(session);
                     continue;
-                }    
+                }
                 var dataForGame = new Dictionary<string, string>();
                 dataForGame["gameName"] = "TicTacToe";
                 dataForGame["creator"] = session.UserCreator;
