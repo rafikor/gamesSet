@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from "react-router-dom";
-//import { signalR } from './signalr.js/jquery.signalR';
-//import { signalR } from './microsoft-signalr/signalr';
 import { HubConnectionBuilder }  from '@microsoft/signalr';
 
 const styleButton = {
@@ -75,23 +73,10 @@ function Square({ value, onSquareClick, disabled }) {
     );
 }
 
-function Board({ xIsNext, squares, onPlay, sendMove, disabled }) {
+function Board({ squares, sendMove, disabled }) {
     function handleClick(i) {
-       /* if (calculateWinner(squares) || squares[i]) {
-            return;
-        }*/
         sendMove(i);
-        /*const nextSquares = squares.slice();
-        if (xIsNext) {
-            nextSquares[i] = 'X';
-        } else {
-            nextSquares[i] = 'O';
-        }
-        onPlay(nextSquares);*/
-        
     }
-
-    //const winner = calculateWinner(squares);
 
     return (
              <div style={ style}>
@@ -127,17 +112,11 @@ export function Tictactoe() {
         newConnection.on("ReceiveState", function (stateJson, localWinnerName, newStatus) {
             var stateJsonParsed = JSON.parse(stateJson);
             let userMove = stateJsonParsed['NextMoveForUser'];
-            //console.log(userMove);
-            //console.log(userName);
-            //console.log('winnerName: ' + localWinnerName);
-            //console.log('status: ' + newStatus);
             setStatus(newStatus);
             setUserOfNextMove(userMove);
             setCanMove(userMove == userName && newStatus==2);
             setWinnerName(localWinnerName);
-            //console.log(stateJsonParsed);
             let newBoard = boardValues.slice();
-            //console.log('stateJsonParsed[Xs];' + stateJsonParsed['Xs'].length)
             for (let i = 0; i < stateJsonParsed['Xs'].length; i++) {
                 newBoard[stateJsonParsed['Xs'][i]] = 'X';
             }
@@ -145,8 +124,6 @@ export function Tictactoe() {
                 newBoard[stateJsonParsed['Os'][i]] = 'O';
             }
             setBoardValues(newBoard);
-            //console.log(newBoard);
-
         });
 
         newConnection.start({ withCredentials: false }).then(function () {
@@ -162,66 +139,23 @@ export function Tictactoe() {
         };
     }, []);
 
-    //var connection = new HubConnectionBuilder().withUrl("/TicTacToeHub?userName=" + userName + "&sessionId=" + sessionId).build();
-    //var connection = new HubConnectionBuilder().withUrl("/TicTacToeHub?userName=" + userName + "&gameSessionId=" + sessionId).build();
-
-    
-
     const sendMove = async (move) => {
-
-        //if (connection) {
-            try {
-                await connection.send('ReceiveMove', userName, sessionId, move);
-                console.log('Send move ' + move);
-            }
-            catch (e) {
-                console.log(e);
-            }
-        /*}
-        else {
-            alert('No connection to server yet.');
-        }*/
-    }
-
-
-    //const [history, setHistory] = useState([Array(9).fill(null)]);
-    const [currentMove, setCurrentMove] = useState(0);
-    const xIsNext = currentMove % 2 === 0;
-    //const currentSquares = history[currentMove];
-
-    /*function handlePlay(nextSquares) {
-        const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
-        setHistory(nextHistory);
-        setCurrentMove(nextHistory.length - 1);
-    }*/
-
-    function jumpTo(nextMove) {
-        setCurrentMove(nextMove);
-    }
-
-    /*const moves = history.map((squares, move) => {
-        let description;
-        if (move > 0) {
-            description = 'Go to move #' + move;
-        } else {
-            description = 'Go to game start';
+        try {
+            await connection.send('ReceiveMove', userName, sessionId, move);
+            console.log('Send move ' + move);
         }
-        return (
-            <li key={move}>
-                <button onClick={() => jumpTo(move)}>{description}</button>
-            </li>
-        );
-    });*/
-
-    
+        catch (e) {
+            console.log(e);
+        }
+    }
 
     return (
         <div className="game">
             <div className="game-board">
                 <CurrentStatus status={status} winnerName={winnerName}
                     userOfNextMove={userOfNextMove} currentPlayerName={userName} />
-                <Board xIsNext={xIsNext} squares={boardValues}
-                    onPlay={() => { }} sendMove={sendMove} disabled={!canMove}/>
+                <Board squares={boardValues}
+                    sendMove={sendMove} disabled={!canMove}/>
             </div>
             
         </div>
