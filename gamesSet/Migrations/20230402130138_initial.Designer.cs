@@ -12,7 +12,7 @@ using gamesSet.Data;
 namespace gamesSet.Migrations
 {
     [DbContext(typeof(gamesSetContext))]
-    [Migration("20230402082303_initial")]
+    [Migration("20230402130138_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -35,6 +35,9 @@ namespace gamesSet.Migrations
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("GameId")
+                        .HasColumnType("int");
 
                     b.Property<string>("GameParams")
                         .IsRequired()

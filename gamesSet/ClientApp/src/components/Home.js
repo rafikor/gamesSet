@@ -1,4 +1,4 @@
-import { StrictMode, Fragment } from 'react';
+import { StrictMode, Fragment, useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { BrowserRouter, useNavigate } from 'react-router-dom';
@@ -44,22 +44,54 @@ function GamesListToCreateSession({ games }) {
 
 
 function SessionsToPlayList({ sessions }) {
+
+    let keys = Object.entries(sessions);
+
     return (<ul>
-        {sessions.map(({ sessionId, gameName }, id) => (
-            <li key={id}>
-                <button id={id}>Connect to session #{sessionId} for {gameName}</button>
-            </li>
-        ))}
+        {
+            keys.map((key) => (
+                // Prints "greeting Hello" followed by "name John"
+                <li key={key[0]}>
+                    <button
+                        id={key[0] + '_b'}
+                        onClick={() => {
+                            let userName = document.getElementById('playername').value;
+                            window.location.href = "/" + key[1]["gameName"] + "?gameSessionId=" + key[0] + "&playerName=" + userName;
+                        }}
+                    >Connect to session #{key[0]} for {key[1]["gameName"]} created by {key[1]["creator"]}
+                        
+                    </button>
+                </li>
+            ))}
+        
     </ul>)
 }
 
 
 export function Home() {
+
+    const [activeSessions, setActiveSessions] = useState(new Map());
+    
+    useEffect(() => {
+        
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        };
+        const response = fetch('GameSessions/GetWaitingGameSessions', requestOptions)
+             .then(response => response.json())
+            .then(data => {
+                setActiveSessions(data);
+                console.log(data);
+            });
+           
+    }, []);
+
     return (
         <div>
             <InputUser />
             <GamesListToCreateSession games={[{ gameName: "Tick-Tack-Toe" }, { gameName: "Labyrinth" }]} />
-            <SessionsToPlayList sessions={[{ gameName: "Tick-Tack-Toe", sessionId: 2 }, { gameName: "Labyrinth", sessionId: 4 }]} />
+            <SessionsToPlayList sessions={activeSessions} />
         </div>
     );
 }

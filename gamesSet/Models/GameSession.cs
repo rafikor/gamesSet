@@ -11,6 +11,8 @@ namespace gamesSet.Models
         public string UserCreator { get; set; } = "";
         public string SecondUser { get; set; } = "";
         public string GameParams { get; set; } = "";
+
+        public int GameId { get; set; }= 0;
         public string GameState { get; set; } = "";
         public string WinnerName { get; set; } = "";
 

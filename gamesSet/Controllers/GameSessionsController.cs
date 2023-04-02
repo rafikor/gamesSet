@@ -109,6 +109,7 @@ namespace gamesSet.Controllers
             };
 
             gameSession.GameParams = JsonConvert.SerializeObject(gameParams);
+            gameSession.GameId = gameId;
 
             var state = new TicTacToeState();
             state.NextMoveForUser = "";
@@ -126,6 +127,23 @@ namespace gamesSet.Controllers
             };
 
             return Redirect($"/{gameAddress}?gameSessionId={gameSession.Id}&playerName={userName}");
+        }
+
+        [HttpPost]
+        public Dictionary<int, Dictionary<string, string>> GetWaitingGameSessions()
+        {
+            var newSessions = _context.GameSession.Where(x=>x.Status == SessionStatus.created);
+
+            var dataToSend = new Dictionary<int, Dictionary<string,string> > ();
+            foreach (var session in newSessions)
+            {
+                var dataForGame = new Dictionary<string, string>();
+                dataForGame["gameName"] = "TicTacToe";
+                dataForGame["creator"] = session.UserCreator;
+                dataForGame["gameId"] = session.GameId.ToString();
+                dataToSend[session.Id] = dataForGame;
+            }
+            return dataToSend;
         }
 
         // DELETE: api/GameSessions/5

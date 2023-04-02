@@ -20,6 +20,7 @@ namespace gamesSet.Migrations
                     UserCreator = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     SecondUser = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     GameParams = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    GameId = table.Column<int>(type: "int", nullable: false),
                     GameState = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     WinnerName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),

@@ -33,6 +33,9 @@ namespace gamesSet.Migrations
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("GameId")
+                        .HasColumnType("int");
+
                     b.Property<string>("GameParams")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
