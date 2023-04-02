@@ -137,6 +137,12 @@ namespace gamesSet.Controllers
             var dataToSend = new Dictionary<int, Dictionary<string,string> > ();
             foreach (var session in newSessions)
             {
+                if((DateTime.Now - session.CreationTime).TotalMinutes>5)//TODO
+                {
+                    session.Status= SessionStatus.cancelled;
+                    _context.GameSession.Update(session);
+                    continue;
+                }    
                 var dataForGame = new Dictionary<string, string>();
                 dataForGame["gameName"] = "TicTacToe";
                 dataForGame["creator"] = session.UserCreator;

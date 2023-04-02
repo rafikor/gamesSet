@@ -12,7 +12,7 @@ using gamesSet.Data;
 namespace gamesSet.Migrations
 {
     [DbContext(typeof(gamesSetContext))]
-    [Migration("20230402130138_initial")]
+    [Migration("20230402162440_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -46,6 +46,9 @@ namespace gamesSet.Migrations
                     b.Property<string>("GameState")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("LastMoveTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("SecondUser")
                         .IsRequired()

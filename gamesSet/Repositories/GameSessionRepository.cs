@@ -33,10 +33,12 @@ namespace gamesSet.Repositories
                             gameSession.UserCreator = (string)reader["UserCreator"];
                             gameSession.SecondUser = (string)reader["SecondUser"];
                             gameSession.GameParams = (string)reader["GameParams"];
+                            gameSession.GameId = (int)reader["GameId"];
                             gameSession.GameState = (string)reader["GameState"];
                             gameSession.WinnerName = (string)reader["WinnerName"];
                             gameSession.Status = (SessionStatus)reader["Status"];
                             gameSession.CreationTime = Convert.ToDateTime(reader["CreationTime"]);
+                            gameSession.LastMoveTime = Convert.ToDateTime(reader["LastMoveTime"]);
                         }
                     }
 
@@ -52,9 +54,9 @@ namespace gamesSet.Repositories
                 }
             }
         }
-        public void UpdateGameSessionStateStatusWinner(GameSession gameSession)
+        public void UpdateGameSessionStateStatusWinnerDatetime(GameSession gameSession)//TODO две пожожие функции с похожими сложными названиями
         {
-            var query = $"UPDATE GameSession SET GameState=@GameState, Status=@Status, WinnerName=@WinnerName  WHERE Id =@sessionId";
+            var query = $"UPDATE GameSession SET GameState=@GameState, Status=@Status, WinnerName=@WinnerName, LastMoveTime=@LastMoveTime   WHERE Id =@sessionId";
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
@@ -69,6 +71,8 @@ namespace gamesSet.Repositories
                         command.Parameters["@Status"].Value = (int)gameSession.Status;
                         command.Parameters.Add("@WinnerName", System.Data.SqlDbType.NVarChar);
                         command.Parameters["@WinnerName"].Value = gameSession.WinnerName;
+                        command.Parameters.Add("@LastMoveTime", System.Data.SqlDbType.DateTime2);
+                        command.Parameters["@LastMoveTime"].Value = gameSession.LastMoveTime;
                         command.Parameters.Add("@sessionId", System.Data.SqlDbType.Int);
                         command.Parameters["@sessionId"].Value = gameSession.Id;
 
@@ -88,9 +92,9 @@ namespace gamesSet.Repositories
             }
         }
 
-        public void UpdateGameSessionUsernamesStatusState(GameSession gameSession)
+        public void UpdateGameSessionUsernamesStatusDatetimeState(GameSession gameSession)
         {
-            var query = $"UPDATE GameSession SET UserCreator=@UserCreator, SecondUser=@SecondUser, Status=@Status, GameState=@GameState WHERE Id =@sessionId";
+            var query = $"UPDATE GameSession SET UserCreator=@UserCreator, SecondUser=@SecondUser, Status=@Status, GameState=@GameState, LastMoveTime=@LastMoveTime WHERE Id =@sessionId";
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 try
@@ -106,6 +110,8 @@ namespace gamesSet.Repositories
                         command.Parameters["@Status"].Value = (int)gameSession.Status;
                         command.Parameters.Add("@GameState", System.Data.SqlDbType.NVarChar);
                         command.Parameters["@GameState"].Value = gameSession.GameState;
+                        command.Parameters.Add("@LastMoveTime", System.Data.SqlDbType.DateTime2);
+                        command.Parameters["@LastMoveTime"].Value = gameSession.LastMoveTime;
                         command.Parameters.Add("@sessionId", System.Data.SqlDbType.Int);
                         command.Parameters["@sessionId"].Value = gameSession.Id;
 

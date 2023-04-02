@@ -24,6 +24,7 @@ namespace gamesSet.Migrations
                     GameState = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     WinnerName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    LastMoveTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>

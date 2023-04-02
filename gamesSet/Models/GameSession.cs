@@ -18,6 +18,7 @@ namespace gamesSet.Models
 
         //[Column(TypeName = "DateTime2")]
         public DateTime CreationTime { get; set; }
+        public DateTime LastMoveTime { get; set; }
         public SessionStatus Status { get; set; }
     }
 

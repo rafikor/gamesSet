@@ -26,6 +26,12 @@ namespace gamesSet.Hubs
 
             GameSession session = gameSessionRepository.GetGameSession(sessionId);
 
+            CheckExpiredWaitingSession(session);
+            if(session.Status != SessionStatus.created)
+            {
+                return Task.CompletedTask;
+            }
+
             //if this is not reconnect
             if (session.UserCreator != userName && session.SecondUser != userName)
             {
@@ -40,6 +46,7 @@ namespace gamesSet.Hubs
                     {
                         session.SecondUser = userName;
                         session.Status = SessionStatus.activeGame;
+                        session.LastMoveTime = DateTime.Now;
 
                         var state = JsonConvert.DeserializeObject<TicTacToeState>(session.GameState);
                         state.NextMoveForUser = userName;
@@ -51,7 +58,7 @@ namespace gamesSet.Hubs
                     }
                 }
 
-                gameSessionRepository.UpdateGameSessionUsernamesStatusState(session);
+                gameSessionRepository.UpdateGameSessionUsernamesStatusDatetimeState(session);
             }
                
             Groups.AddToGroupAsync(Context.ConnectionId, GetUserDefGroupName(userName, sessionId));
@@ -65,6 +72,15 @@ namespace gamesSet.Hubs
             }
 
             return base.OnConnectedAsync();
+        }
+
+        private void CheckExpiredWaitingSession(GameSession session)
+        {
+            if(session.Status == SessionStatus.created && (DateTime.Now - session.CreationTime).TotalMinutes > 5)
+            {
+                session.Status = SessionStatus.cancelled;
+                gameSessionRepository.UpdateGameSessionStateStatusWinnerDatetime(session);
+            }
         }
 
         private List<string> GetNamesOfOtherUsers(GameSession session, string currentUserName)
@@ -115,42 +131,57 @@ namespace gamesSet.Hubs
         public async Task ReceiveMove(string userName, string sessionId, int move)
         {
             var gameSession = gameSessionRepository.GetGameSession(sessionId);
+            if (gameSession.Status == SessionStatus.activeGame)
+            {
 
-            var stateJson = gameSession.GameState;
-            var state = JsonConvert.DeserializeObject<TicTacToeState>(stateJson);
-            if(userName == gameSession.UserCreator)
-            {
-                state.Os.Add(move);
-            }
-            else
-            {
-                state.Xs.Add(move);
-            }
-            state.NextMoveForUser = GetNamesOfOtherUsers(gameSession, userName)[0];
-
-            gameSession.GameState = JsonConvert.SerializeObject(state);
-
-            string winner = checkWinner(state);
-            if(winner=="O")
-            {
-                gameSession.Status = SessionStatus.finished;
-                gameSession.WinnerName = gameSession.UserCreator;
-            }
-            else
-            {
-                if (winner == "X")
+                if ((DateTime.Now - gameSession.LastMoveTime).TotalMinutes > 2)//TODO
                 {
                     gameSession.Status = SessionStatus.finished;
-                    gameSession.WinnerName = gameSession.SecondUser;
+                    gameSession.WinnerName = GetNamesOfOtherUsers(gameSession, userName)[0];
+                    gameSessionRepository.UpdateGameSessionStateStatusWinnerDatetime(gameSession);
+                    return;
                 }
-            }    
+                else
+                {
 
-            gameSessionRepository.UpdateGameSessionStateStatusWinner(gameSession);
+                    var stateJson = gameSession.GameState;
+                    var state = JsonConvert.DeserializeObject<TicTacToeState>(stateJson);
+                    if (userName == gameSession.UserCreator)
+                    {
+                        state.Os.Add(move);
+                    }
+                    else
+                    {
+                        state.Xs.Add(move);
+                    }
+                    state.NextMoveForUser = GetNamesOfOtherUsers(gameSession, userName)[0];
 
-            SendState(gameSession.UserCreator, sessionId, gameSession.GameState,
-                    gameSession.WinnerName, (int)gameSession.Status);
-            SendState(gameSession.SecondUser, sessionId, gameSession.GameState,
-                    gameSession.WinnerName, (int)gameSession.Status);
+                    gameSession.GameState = JsonConvert.SerializeObject(state);
+
+                    string winner = checkWinner(state);
+                    if (winner == "O")
+                    {
+                        gameSession.Status = SessionStatus.finished;
+                        gameSession.WinnerName = gameSession.UserCreator;
+                    }
+                    else
+                    {
+                        if (winner == "X")
+                        {
+                            gameSession.Status = SessionStatus.finished;
+                            gameSession.WinnerName = gameSession.SecondUser;
+                        }
+                    }
+                    gameSession.LastMoveTime = DateTime.Now;
+
+                }
+                gameSessionRepository.UpdateGameSessionStateStatusWinnerDatetime(gameSession);
+
+                SendState(gameSession.UserCreator, sessionId, gameSession.GameState,
+                        gameSession.WinnerName, (int)gameSession.Status);
+                SendState(gameSession.SecondUser, sessionId, gameSession.GameState,
+                        gameSession.WinnerName, (int)gameSession.Status);
+            }
             /*var jsonToSend = JsonConvert.SerializeObject(canMove);
             await Clients.Group(GetUserDefGroupName(userName, sessionId)).SendAsync("ReceiveCanMove", jsonToSend);*/
         }
