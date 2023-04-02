@@ -27,38 +27,37 @@ namespace gamesSet.Hubs
             GameSession session = gameSessionRepository.GetGameSession(sessionId);
 
             CheckExpiredWaitingSession(session);
-            if(session.Status != SessionStatus.created)
+            if (session.Status == SessionStatus.created)
             {
-                return Task.CompletedTask;
-            }
 
-            //if this is not reconnect
-            if (session.UserCreator != userName && session.SecondUser != userName)
-            {
-                if (session.UserCreator == "")
+                //if this is not reconnect
+                if (session.UserCreator != userName && session.SecondUser != userName)
                 {
-                    session.UserCreator = userName;
-                    session.Status = SessionStatus.created;
-                }
-                else
-                {
-                    if (session.SecondUser == "")
+                    if (session.UserCreator == "")
                     {
-                        session.SecondUser = userName;
-                        session.Status = SessionStatus.activeGame;
-                        session.LastMoveTime = DateTime.Now;
-
-                        var state = JsonConvert.DeserializeObject<TicTacToeState>(session.GameState);
-                        state.NextMoveForUser = userName;
-                        session.GameState = JsonConvert.SerializeObject(state);
+                        session.UserCreator = userName;
+                        session.Status = SessionStatus.created;
                     }
                     else
                     {
-                        return new Task(() => { });//TODO: no third connection
-                    }
-                }
+                        if (session.SecondUser == "")
+                        {
+                            session.SecondUser = userName;
+                            session.Status = SessionStatus.activeGame;
+                            session.LastMoveTime = DateTime.Now;
 
-                gameSessionRepository.UpdateGameSessionUsernamesStatusDatetimeState(session);
+                            var state = JsonConvert.DeserializeObject<TicTacToeState>(session.GameState);
+                            state.NextMoveForUser = userName;
+                            session.GameState = JsonConvert.SerializeObject(state);
+                        }
+                        else
+                        {
+                            return new Task(() => { });//TODO: no third connection
+                        }
+                    }
+
+                    gameSessionRepository.UpdateGameSessionUsernamesStatusDatetimeState(session);
+                }
             }
                
             Groups.AddToGroupAsync(Context.ConnectionId, GetUserDefGroupName(userName, sessionId));
