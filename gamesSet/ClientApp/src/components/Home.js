@@ -15,14 +15,15 @@ function InputUser() {
 
 function CreateGameSessionControl({ id, gameName }) {
 
-    let navigate = useNavigate();
+//    let navigate = useNavigate();
 
     function onClickCreateSession() {
         console.log('t')
         let userName = document.getElementById('playername').value;
         console.log(userName);
         let url = '/GameSessions/CreateSessionByUser?userName=' + userName + '&gameId=' + id;
-        navigate(url);
+        //navigate(url);
+        window.location.href = url;
     }
     return (<li key={id}>
         <button id={id} onClick={onClickCreateSession}>
