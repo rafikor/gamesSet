@@ -1,7 +1,10 @@
 ﻿using gamesSet.Models;
 using gamesSet.Repositories;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
+using System.Linq;
+using System.Numerics;
 
 namespace gamesSet.Hubs
 {
@@ -53,10 +56,12 @@ namespace gamesSet.Hubs
                
             Groups.AddToGroupAsync(Context.ConnectionId, GetUserDefGroupName(userName, sessionId));
 
-            SendState(userName, sessionId, session.GameState);
+            SendState(userName, sessionId, session.GameState,
+                    session.WinnerName, (int)session.Status);
             if (session.Status == SessionStatus.activeGame)
             {
-                SendState(GetNamesOfOtherUsers(session, userName)[0], sessionId, session.GameState);
+                SendState(GetNamesOfOtherUsers(session, userName)[0], sessionId, session.GameState, 
+                    session.WinnerName, (int)session.Status);
             }
 
             return base.OnConnectedAsync();
@@ -95,15 +100,16 @@ namespace gamesSet.Hubs
             await Clients.Group(GetUserDefGroupName(userName, sessionId)).SendAsync("ReceiveCanMove", jsonToSend);
         }
 
-        public async Task SendState(string userName, string sessionId, string state)
+        public async Task SendState(string userName, string sessionId, string state, string winnerName, int status)
         {
-         //   var gameSession = gameSessionRepository.GetGameSession(sessionId);
-         //   var state = gameSession.GameState;
+            //   var gameSession = gameSessionRepository.GetGameSession(sessionId);
+            //   var state = gameSession.GameState;
             //state["O"] = new List<int>() {1,3 };
             //state["S"] = new List<int>() { 2, 5 };
             //state["NextMoveForUser"] = "userName";
             //var jsonToSend = JsonConvert.SerializeObject(state);
-            await Clients.Group(GetUserDefGroupName(userName, sessionId)).SendAsync("ReceiveState", state);
+            GameSession f = new GameSession();
+            await Clients.Group(GetUserDefGroupName(userName, sessionId)).SendAsync("ReceiveState", state, winnerName, status);
         }
 
         public async Task ReceiveMove(string userName, string sessionId, int move)
@@ -124,12 +130,68 @@ namespace gamesSet.Hubs
 
             gameSession.GameState = JsonConvert.SerializeObject(state);
 
+            string winner = checkWinner(state);
+            if(winner=="O")
+            {
+                gameSession.Status = SessionStatus.finished;
+                gameSession.WinnerName = gameSession.UserCreator;
+            }
+            else
+            {
+                if (winner == "X")
+                {
+                    gameSession.Status = SessionStatus.finished;
+                    gameSession.WinnerName = gameSession.SecondUser;
+                }
+            }    
+
             gameSessionRepository.UpdateGameSessionStateStatusWinner(gameSession);
 
-            SendState(gameSession.UserCreator, sessionId, gameSession.GameState);
-            SendState(gameSession.SecondUser, sessionId, gameSession.GameState);
+            SendState(gameSession.UserCreator, sessionId, gameSession.GameState,
+                    gameSession.WinnerName, (int)gameSession.Status);
+            SendState(gameSession.SecondUser, sessionId, gameSession.GameState,
+                    gameSession.WinnerName, (int)gameSession.Status);
             /*var jsonToSend = JsonConvert.SerializeObject(canMove);
             await Clients.Group(GetUserDefGroupName(userName, sessionId)).SendAsync("ReceiveCanMove", jsonToSend);*/
+        }
+
+        private string checkWinner(TicTacToeState state)
+        {
+            var lines = new List<List<int>>() {
+
+                new List<int>(){ 0, 1, 2 },
+
+                new List<int>(){ 3, 4, 5 },
+
+                new List<int>(){ 6, 7, 8 },
+
+                new List<int>(){ 0, 3, 6 },
+
+                new List<int>(){ 1, 4, 7 },
+
+                new List<int>(){ 2, 5, 8 },
+
+                new List<int>(){ 0, 4, 8 },
+
+                new List<int>(){ 2, 4, 6 },
+            };
+            for (int i = 0; i < lines.Count; i++)
+            {
+                if (state.Os.Contains(lines[i][0]) && state.Os.Contains(lines[i][1]) && state.Os.Contains(lines[i][2]))
+                {
+                    return "O";
+                }
+                if (state.Xs.Contains(lines[i][0]) && state.Xs.Contains(lines[i][1]) && state.Xs.Contains(lines[i][2]))
+                {
+                    return "X";
+                }
+                /*const [a, b, c] = lines[i];
+                if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c])
+                {
+                    return squares[a];
+                }*/
+            }
+            return "";
         }
     }
 }

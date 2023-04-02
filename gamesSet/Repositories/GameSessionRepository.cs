@@ -68,7 +68,7 @@ namespace gamesSet.Repositories
                         command.Parameters.Add("@Status", System.Data.SqlDbType.NVarChar);
                         command.Parameters["@Status"].Value = (int)gameSession.Status;
                         command.Parameters.Add("@WinnerName", System.Data.SqlDbType.NVarChar);
-                        command.Parameters["@WinnerName"].Value = gameSession.GameState;
+                        command.Parameters["@WinnerName"].Value = gameSession.WinnerName;
                         command.Parameters.Add("@sessionId", System.Data.SqlDbType.Int);
                         command.Parameters["@sessionId"].Value = gameSession.Id;
 

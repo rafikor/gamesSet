@@ -32,28 +32,23 @@ function Square({ value, onSquareClick, disabled }) {
     );
 }
 
-function Board({ xIsNext, squares, onPlay, sendMove, disabled }) {
+function Board({ xIsNext, squares, onPlay, sendMove, disabled, status }) {
     function handleClick(i) {
-        if (calculateWinner(squares) || squares[i]) {
+       /* if (calculateWinner(squares) || squares[i]) {
             return;
-        }
+        }*/
         sendMove(i);
-        const nextSquares = squares.slice();
+        /*const nextSquares = squares.slice();
         if (xIsNext) {
             nextSquares[i] = 'X';
         } else {
             nextSquares[i] = 'O';
         }
-        onPlay(nextSquares);
+        onPlay(nextSquares);*/
+        
     }
 
-    const winner = calculateWinner(squares);
-    let status;
-    if (winner) {
-        status = 'Winner: ' + winner;
-    } else {
-        status = 'Next player: ' + (xIsNext ? 'X' : 'O');
-    }
+    //const winner = calculateWinner(squares);
 
     return (
         <>
@@ -78,6 +73,9 @@ export function Tictactoe() {
     const [userName, setUserName] = useState(searchParams.get("playerName"));
     const [sessionId, setSessionId] = useState(searchParams.get("gameSessionId"));
     const [canMove, setCanMove] = useState(false);
+    const [userOfNextMove, setUserOfNextMove] = useState("");
+    const [status, setStatus] = useState(0);
+    const [winnerName, setWinnerName] = useState("");
     const [connection, setConnection] = useState(null);
 
     const [boardValues, setBoardValues] = useState([Array(9).fill(null)]);
@@ -86,12 +84,17 @@ export function Tictactoe() {
         const newConnection = new HubConnectionBuilder()
             .withUrl("/TicTacToeHub?userName=" + userName + "&gameSessionId=" + sessionId).build();
 
-        newConnection.on("ReceiveState", function (stateJson) {
+        newConnection.on("ReceiveState", function (stateJson, localWinnerName, newStatus) {
             var stateJsonParsed = JSON.parse(stateJson);
             let userMove = stateJsonParsed['NextMoveForUser'];
             console.log(userMove);
             console.log(userName);
-            setCanMove(userMove == userName);
+            console.log('winnerName: ' + localWinnerName);
+            console.log('status: ' + newStatus);
+            setStatus(newStatus);
+            setUserOfNextMove(userMove);
+            setCanMove(userMove == userName && newStatus==2);
+            setWinnerName(localWinnerName);
             console.log(stateJsonParsed);
             let newBoard = boardValues.slice();
             console.log('stateJsonParsed[Xs];' + stateJsonParsed['Xs'].length)
@@ -170,34 +173,28 @@ export function Tictactoe() {
         );
     });*/
 
+    let statusString;
+    if (status == 1) {
+        statusString = 'Waiting for other player...';
+    }
+    else {
+        if (status == 3) {
+            statusString = 'Winner: ' + winnerName;
+        } else {
+            statusString = 'Next player: ' + userOfNextMove;
+        }
+    }
+
     console.log('canMove:' + canMove);
 
     return (
         <div className="game">
             <div className="game-board">
-                <Board xIsNext={xIsNext} squares={boardValues} onPlay={() => { } } sendMove={sendMove} disabled={!canMove} />
+                <Board xIsNext={xIsNext} squares={boardValues}
+                    onPlay={() => { }} sendMove={sendMove} disabled={!canMove}
+                    status={statusString}/>
             </div>
             
         </div>
     );
-}
-
-function calculateWinner(squares) {
-    const lines = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6],
-    ];
-    for (let i = 0; i < lines.length; i++) {
-        const [a, b, c] = lines[i];
-        if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-            return squares[a];
-        }
-    }
-    return null;
 }
