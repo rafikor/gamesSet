@@ -33,6 +33,10 @@ namespace gamesSet.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("GameState")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("SecondUser")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

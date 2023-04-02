@@ -109,6 +109,14 @@ namespace gamesSet.Controllers
             };
 
             gameSession.GameParams = JsonConvert.SerializeObject(gameParams);
+
+            var state = new Dictionary<string, object>();
+            state["O"] = new List<int>();
+            state["S"] = new List<int>();
+            state["nextMoveForUser"] = userName;
+
+            var gameState = JsonConvert.SerializeObject(state);
+            gameSession.GameState = gameState;
             AddGameSession(gameSession);
 
             //TODO: remove from here

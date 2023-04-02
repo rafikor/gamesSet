@@ -11,7 +11,7 @@ using gamesSet.Data;
 namespace gamesSet.Migrations
 {
     [DbContext(typeof(gamesSetContext))]
-    [Migration("20230401125523_initial")]
+    [Migration("20230402045120_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -33,6 +33,10 @@ namespace gamesSet.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("GameParams")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GameState")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

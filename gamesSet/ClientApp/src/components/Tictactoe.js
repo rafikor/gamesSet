@@ -77,10 +77,10 @@ export function Tictactoe() {
     const [searchParams, setSearchParams] = useSearchParams(window.location.search);
     const [userName, setUserName] = useState(searchParams.get("playerName"));
     const [sessionId, setSessionId] = useState(searchParams.get("gameSessionId"));
+    const [canMove, setCanMove] = useState(false);
 
     //var connection = new HubConnectionBuilder().withUrl("/TicTacToeHub?userName=" + userName + "&sessionId=" + sessionId).build();
     var connection = new HubConnectionBuilder().withUrl("/TicTacToeHub?userName=" + userName + "&gameSessionId=" + sessionId).build();
-    //var connection = new HubConnectionBuilder().withUrl("/TicTacToeHub").build();
 
     connection.start({ withCredentials: false }).then(function () {
         console.log('connected');
@@ -106,6 +106,7 @@ export function Tictactoe() {
     connection.on("ReceiveState", function (stateJson) {
         var stateJsonParsed = JSON.parse(stateJson);
         //let userMove = userMoveJSON['userMove'];
+        setCanMove(stateJsonParsed['canMove']);
         console.log(stateJsonParsed);
     });
 
