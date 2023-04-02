@@ -80,6 +80,8 @@ export function Tictactoe() {
     const [canMove, setCanMove] = useState(false);
     const [connection, setConnection] = useState(null);
 
+    const [boardValues, setBoardValues] = useState([Array(9).fill(null)]);
+
     useEffect(() => {
         const newConnection = new HubConnectionBuilder()
             .withUrl("/TicTacToeHub?userName=" + userName + "&gameSessionId=" + sessionId).build();
@@ -91,6 +93,17 @@ export function Tictactoe() {
             console.log(userName);
             setCanMove(userMove == userName);
             console.log(stateJsonParsed);
+            let newBoard = boardValues.slice();
+            console.log('stateJsonParsed[Xs];' + stateJsonParsed['Xs'].length)
+            for (let i = 0; i < stateJsonParsed['Xs'].length; i++) {
+                newBoard[stateJsonParsed['Xs'][i]] = 'X';
+            }
+            for (let i = 0; i < stateJsonParsed['Os'].length; i++) {
+                newBoard[stateJsonParsed['Os'][i]] = 'O';
+            }
+            setBoardValues(newBoard);
+            console.log(newBoard);
+
         });
 
         newConnection.start({ withCredentials: false }).then(function () {
@@ -128,22 +141,22 @@ export function Tictactoe() {
     }
 
 
-    const [history, setHistory] = useState([Array(9).fill(null)]);
+    //const [history, setHistory] = useState([Array(9).fill(null)]);
     const [currentMove, setCurrentMove] = useState(0);
     const xIsNext = currentMove % 2 === 0;
-    const currentSquares = history[currentMove];
+    //const currentSquares = history[currentMove];
 
-    function handlePlay(nextSquares) {
+    /*function handlePlay(nextSquares) {
         const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
         setHistory(nextHistory);
         setCurrentMove(nextHistory.length - 1);
-    }
+    }*/
 
     function jumpTo(nextMove) {
         setCurrentMove(nextMove);
     }
 
-    const moves = history.map((squares, move) => {
+    /*const moves = history.map((squares, move) => {
         let description;
         if (move > 0) {
             description = 'Go to move #' + move;
@@ -155,18 +168,16 @@ export function Tictactoe() {
                 <button onClick={() => jumpTo(move)}>{description}</button>
             </li>
         );
-    });
+    });*/
 
     console.log('canMove:' + canMove);
 
     return (
         <div className="game">
             <div className="game-board">
-                <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} sendMove={sendMove} disabled={!canMove} />
+                <Board xIsNext={xIsNext} squares={boardValues} onPlay={() => { } } sendMove={sendMove} disabled={!canMove} />
             </div>
-            <div className="game-info">
-                <ol>{moves}</ol>
-            </div>
+            
         </div>
     );
 }
