@@ -126,7 +126,8 @@ namespace gamesSet.Hubs
 
             gameSessionRepository.UpdateGameSessionStateStatusWinner(gameSession);
 
-            SendState(userName, sessionId, gameSession.GameState);
+            SendState(gameSession.UserCreator, sessionId, gameSession.GameState);
+            SendState(gameSession.SecondUser, sessionId, gameSession.GameState);
             /*var jsonToSend = JsonConvert.SerializeObject(canMove);
             await Clients.Group(GetUserDefGroupName(userName, sessionId)).SendAsync("ReceiveCanMove", jsonToSend);*/
         }

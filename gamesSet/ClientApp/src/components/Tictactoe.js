@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from "react-router-dom";
 //import { signalR } from './signalr.js/jquery.signalR';
 //import { signalR } from './microsoft-signalr/signalr';
@@ -24,15 +24,15 @@ const style = {
 };
 
 
-function Square({ value, onSquareClick }) {
+function Square({ value, onSquareClick, disabled }) {
     return (
-        <button className="square" style={ styleButton} onClick={onSquareClick}>
+        <button className="square" style={styleButton} onClick={onSquareClick} disabled={ disabled}>
             {value}
         </button>
     );
 }
 
-function Board({ xIsNext, squares, onPlay, sendMove }) {
+function Board({ xIsNext, squares, onPlay, sendMove, disabled }) {
     function handleClick(i) {
         if (calculateWinner(squares) || squares[i]) {
             return;
@@ -59,15 +59,15 @@ function Board({ xIsNext, squares, onPlay, sendMove }) {
         <>
         <div className="status">{status}</div>
         <div style={ style}>
-                <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
-                <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
-                <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
-                <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
-                <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
-                <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
-                <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
-                <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
-                <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
+                <Square value={squares[0]} onSquareClick={() => handleClick(0)} disabled={disabled} />
+                <Square value={squares[1]} onSquareClick={() => handleClick(1)} disabled={disabled} />
+                <Square value={squares[2]} onSquareClick={() => handleClick(2)} disabled={disabled} />
+                <Square value={squares[3]} onSquareClick={() => handleClick(3)} disabled={disabled} />
+                <Square value={squares[4]} onSquareClick={() => handleClick(4)} disabled={disabled} />
+                <Square value={squares[5]} onSquareClick={() => handleClick(5)} disabled={disabled} />
+                <Square value={squares[6]} onSquareClick={() => handleClick(6)} disabled={disabled} />
+                <Square value={squares[7]} onSquareClick={() => handleClick(7)} disabled={disabled} />
+                <Square value={squares[8]} onSquareClick={() => handleClick(8)} disabled={disabled} />
             </div>
         </>
     );
@@ -78,15 +78,38 @@ export function Tictactoe() {
     const [userName, setUserName] = useState(searchParams.get("playerName"));
     const [sessionId, setSessionId] = useState(searchParams.get("gameSessionId"));
     const [canMove, setCanMove] = useState(false);
+    const [connection, setConnection] = useState(null);
+
+    useEffect(() => {
+        const newConnection = new HubConnectionBuilder()
+            .withUrl("/TicTacToeHub?userName=" + userName + "&gameSessionId=" + sessionId).build();
+
+        newConnection.on("ReceiveState", function (stateJson) {
+            var stateJsonParsed = JSON.parse(stateJson);
+            let userMove = stateJsonParsed['NextMoveForUser'];
+            console.log(userMove);
+            console.log(userName);
+            setCanMove(userMove == userName);
+            console.log(stateJsonParsed);
+        });
+
+        newConnection.start({ withCredentials: false }).then(function () {
+            console.log('connected');
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
+
+        setConnection(newConnection);
+
+        return () => {
+            newConnection.stop();
+        };
+    }, []);
 
     //var connection = new HubConnectionBuilder().withUrl("/TicTacToeHub?userName=" + userName + "&sessionId=" + sessionId).build();
-    var connection = new HubConnectionBuilder().withUrl("/TicTacToeHub?userName=" + userName + "&gameSessionId=" + sessionId).build();
+    //var connection = new HubConnectionBuilder().withUrl("/TicTacToeHub?userName=" + userName + "&gameSessionId=" + sessionId).build();
 
-    connection.start({ withCredentials: false }).then(function () {
-        console.log('connected');
-    }).catch(function (err) {
-        return console.error(err.toString());
-    });
+    
 
     const sendMove = async (move) => {
 
@@ -103,13 +126,6 @@ export function Tictactoe() {
             alert('No connection to server yet.');
         }*/
     }
-
-    connection.on("ReceiveState", function (stateJson) {
-        var stateJsonParsed = JSON.parse(stateJson);
-        let userMove = stateJsonParsed['nextMoveForUser'];
-        setCanMove(userMove === userName);
-        console.log(stateJsonParsed);
-    });
 
 
     const [history, setHistory] = useState([Array(9).fill(null)]);
@@ -141,10 +157,12 @@ export function Tictactoe() {
         );
     });
 
+    console.log('canMove:' + canMove);
+
     return (
         <div className="game">
             <div className="game-board">
-                <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} sendMove={sendMove} />
+                <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} sendMove={sendMove} disabled={!canMove} />
             </div>
             <div className="game-info">
                 <ol>{moves}</ol>
