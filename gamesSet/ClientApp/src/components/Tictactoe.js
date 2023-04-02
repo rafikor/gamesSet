@@ -93,6 +93,7 @@ export function Tictactoe() {
         //if (connection) {
             try {
                 await connection.send('ReceiveMove', userName, sessionId, move);
+                console.log('Send move ' + move);
             }
             catch (e) {
                 console.log(e);
@@ -105,8 +106,8 @@ export function Tictactoe() {
 
     connection.on("ReceiveState", function (stateJson) {
         var stateJsonParsed = JSON.parse(stateJson);
-        //let userMove = userMoveJSON['userMove'];
-        setCanMove(stateJsonParsed['canMove']);
+        let userMove = stateJsonParsed['nextMoveForUser'];
+        setCanMove(userMove === userName);
         console.log(stateJsonParsed);
     });
 

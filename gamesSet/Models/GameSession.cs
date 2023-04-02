@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace gamesSet.Models
 {
@@ -11,9 +13,11 @@ namespace gamesSet.Models
         public string GameParams { get; set; } = "";
         public string GameState { get; set; } = "";
         public string WinnerName { get; set; } = "";
-        public SessionStatus status;
-        public DateTime creationTime;
+
+        //[Column(TypeName = "DateTime2")]
+        public DateTime CreationTime { get; set; }
+        public SessionStatus Status { get; set; }
     }
 
-    public enum SessionStatus {created, activeGame,finished,cancelled};
+    public enum SessionStatus {created=1, activeGame,finished,cancelled};
 }

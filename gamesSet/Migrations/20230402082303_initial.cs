@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -20,7 +21,9 @@ namespace gamesSet.Migrations
                     SecondUser = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     GameParams = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     GameState = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    WinnerName = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    WinnerName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {

@@ -89,7 +89,7 @@ namespace gamesSet.Controllers
               throw new Exception("Entity set 'gamesSetContext.GameSession'  is null.");
           }
             _context.GameSession.Add(gameSession);
-            await _context.SaveChangesAsync();
+            _context.SaveChanges();
         }
 
         // POST: api/GameSessions
@@ -100,8 +100,8 @@ namespace gamesSet.Controllers
             var gameSession = new GameSession();
 
             gameSession.UserCreator = userName;
-            gameSession.status = SessionStatus.created;
-            gameSession.creationTime = DateTime.Now;
+            gameSession.Status = SessionStatus.created;
+            gameSession.CreationTime = DateTime.Now;
 
             var gameParams = new Dictionary<string, object>
             {
@@ -110,10 +110,8 @@ namespace gamesSet.Controllers
 
             gameSession.GameParams = JsonConvert.SerializeObject(gameParams);
 
-            var state = new Dictionary<string, object>();
-            state["O"] = new List<int>();
-            state["S"] = new List<int>();
-            state["nextMoveForUser"] = userName;
+            var state = new TicTacToeState();
+            state.NextMoveForUser = "";
 
             var gameState = JsonConvert.SerializeObject(state);
             gameSession.GameState = gameState;
