@@ -137,8 +137,8 @@ namespace gamesSet.Controllers
             //TODO: remove from here
             string gameAddress = gameId switch
             {
-                0 =>"tictactoe",
-                1 => "reversi",
+                0 =>"Tictactoe",
+                1 => "Reversi",
                 _ =>"error"
             };
 
