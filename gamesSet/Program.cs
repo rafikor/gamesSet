@@ -33,6 +33,6 @@ app.MapControllerRoute(
 
 app.MapHub<GameHub>("/GameHub");
 
-//app.MapFallbackToFile("index.html"); ;
+app.MapFallbackToFile("index.html"); ;
 
 app.Run();
