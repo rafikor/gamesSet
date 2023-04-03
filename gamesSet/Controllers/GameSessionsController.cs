@@ -121,6 +121,7 @@ namespace gamesSet.Controllers
                     TicTacToe.InitGameSpecificParam(gameParams, gameSession);
                     break;
                 case 1:
+                    Reversi.InitGameSpecificParam(gameParams, gameSession);
                     break;
                 default:
                     throw new Exception("Not implemented");
@@ -131,10 +132,6 @@ namespace gamesSet.Controllers
             gameSession.GameId = gameId;
             gameSession.NextMoveForUser = "";
 
-            var state = new TicTacToeState();
-
-            var gameState = JsonConvert.SerializeObject(state);
-            gameSession.GameState = gameState;
             AddGameSession(gameSession);
 
             //TODO: remove from here

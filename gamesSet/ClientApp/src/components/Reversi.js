@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from "react-router-dom";
+import { HubConnectionBuilder } from '@microsoft/signalr';
 
 import './Reversi.css';
+
+import { CurrentStatus } from './CurrentStatus';
 
 export function Reversi() {
     const [board, setBoard] = useState(Array(8).fill(Array(8).fill(null)));
@@ -8,26 +12,112 @@ export function Reversi() {
     const [winner, setWinner] = useState('');
     const [additionalMessage, setAdditionalMessage] = useState('');
 
+    const [searchParams, setSearchParams] = useSearchParams(window.location.search);
+    const [userName, setUserName] = useState(searchParams.get("playerName"));
+    const [playerNames, setPlayerNames] = useState([]);
+    const [sessionId, setSessionId] = useState(searchParams.get("gameSessionId"));
+    const [canMove, setCanMove] = useState(false);
+    const [userOfNextMove, setUserOfNextMove] = useState("");
+    const [status, setStatus] = useState(-1);
+    const [winnerName, setWinnerName] = useState("");
+    const [connection, setConnection] = useState(null);
+
+    const [playerWithWhite, setPlayerWithWhite] = useState("");
+
+    //const [boardValues, setBoardValues] = useState([Array(9).fill(null)]);
+
     useEffect(() => {
-        const newBoard = board.map((rowArray, row) =>
-            rowArray.map((cell, col) => {
-                if (
-                    (row === 3 && col === 3) ||
-                    (row === 4 && col === 4)
-                ) {
-                    return 'white';
-                } else if (
-                    (row === 3 && col === 4) ||
-                    (row === 4 && col === 3)
-                ) {
-                    return 'black';
-                } else {
-                    return null;
-                }
-            })
-        );
-        setBoard(newBoard);
+        const newConnection = new HubConnectionBuilder()
+            .withUrl("/GameHub?userName=" + userName + "&gameSessionId=" + sessionId).build();
+
+        newConnection.on("ReceiveState", function (sessionJson) {
+            let session = JSON.parse(sessionJson);
+            let localWinnerName = session["WinnerName"];
+            let newStatus = session["Status"];
+            let userMove = session['NextMoveForUser'];
+            setStatus(newStatus);
+            var stateJsonParsed = JSON.parse(session["GameState"]);
+            setAdditionalMessage(stateJsonParsed['AdditionalMessage'])
+
+            setUserOfNextMove(userMove);
+            setCanMove(userMove == userName && newStatus == 2);
+            setWinnerName(localWinnerName);
+            let gameParams = JSON.parse(session["GameParams"]);
+
+            setPlayerWithWhite(gameParams["playerWithWhites"]);
+            if (gameParams["playerWithWhites"] === userName) {
+                setPlayer('white');
+            }
+            else {
+                setPlayer('black');
+            }
+
+            playerNames.push(session["UserCreator"]);
+            playerNames.push(session["SecondUser"]);
+            setPlayerNames(playerNames)
+
+            const newBoard = board.map((rowArray, row) =>
+                rowArray.map((cell, col) => {
+                    let color = null;
+                    let colorCode = stateJsonParsed['Board'][row][col];
+                    if (colorCode === 1) {
+                        color = 'white';
+                        // console.log(color);
+                    }
+                    if (colorCode === 2) {
+                        color = 'black';
+                        // console.log(color);
+                    }
+                    return color;
+                })
+            );
+            setBoard(newBoard);
+            console.log(newBoard);
+        });
+
+        newConnection.start({ withCredentials: false }).then(function () {
+            console.log('connected');
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
+
+        setConnection(newConnection);
+
+        return () => {
+            newConnection.stop();
+        };
     }, []);
+
+    const sendMove = async (row, col) => {
+        try {
+            var move = row * 8 + col;
+            await connection.send('ReceiveMove', userName, sessionId, move);
+            console.log('Send move ' + move);
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
+
+    let whoIsWho = ''
+    if (playerNames[0] === userName || playerNames[1] === userName) {
+        if (playerWithWhite === userName) {
+            whoIsWho = 'Your are White';
+        }
+        else {
+            whoIsWho = 'Your are Black';
+        }
+    }
+    else {
+        let opponent = '';
+        if (playerWithWhite == playerNames[0]) {
+            opponent = playerNames[1];
+        }
+        else {
+            opponent = playerNames[0];
+        }
+        whoIsWho = playerWithWhite + ' moves by White; ' + opponent + ' moves by Black';
+    }
 
     function tryMove(board, row, col, player) {
         if (board[row][col] !== null) {
@@ -65,28 +155,13 @@ export function Reversi() {
                 flippedCells.push(...tempFlippedCells);
             }
         }
-        //console.log('flippedCells inside')
-        //console.log(flippedCells)
-        //console.log(flippedCells.length)
         return flippedCells;
     }
 
-    function arePossibleMovesAvailable(board, player) {
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                let newMoves = tryMove(board, row, col, player)
-                //console.log(newMoves);
-                //console.log('flippedCells length')
-                //console.log(newMoves.length);
-                if (newMoves.length !=0) {
-                    return true;
-                }
-            }
+    function handleClick(row, col, board) {
+        if (!canMove) {
+            return;
         }
-        return false;
-    }
-
-    function handleClick(row, col,board, setBoard, setWinner) {
         if (board[row][col] !== null) {
             return;
         }
@@ -98,58 +173,20 @@ export function Reversi() {
             return;
         }
 
-        //Update the board
-        const newBoard = board.map((rowArray, r) =>
-            rowArray.map((cell, c) =>
-                (r === row && c === col) || flippedCells.some(cell => cell[0] === r && cell[1] === c)
-                    ? player
-                    : cell
-            )
-        );
-        setBoard(newBoard);
-        let oldPlayer = player;
-        let oppositePlayer = player === 'black' ? 'white' : 'black'
-
-        let canContinue = true;
-        if (!arePossibleMovesAvailable(newBoard, oppositePlayer)) {
-            if (arePossibleMovesAvailable(newBoard, oldPlayer)) {
-                setPlayer(oldPlayer);
-                setAdditionalMessage('Move goes to ' + oldPlayer + ' again, because ' + oppositePlayer + 'can\'t move');
-            }
-            else {
-                canContinue = false;
-                if (newBoard.flat().filter(cell => cell === null).length !== 0) {
-                    setAdditionalMessage('No one player can move, end of the game');
-                }
-            }
-        }
-        else {
-            setPlayer(oppositePlayer);     
-            if (additionalMessage != '') {
-                setAdditionalMessage('');
-            }
-        }
-
-        //search winner
-        const flattenedBoard = newBoard.flat();
-        const numEmptyCells = flattenedBoard.filter(cell => cell === null).length;
-        const numWhiteCells = flattenedBoard.filter(cell => cell === 'white').length;
-        const numBlackCells = flattenedBoard.filter(cell => cell === 'black').length;
-        let winner = null;
-        if (numEmptyCells === 0 || numWhiteCells === 0 || numBlackCells === 0 || !canContinue) {
-            //If there are no empty cells or one color has no pieces, the game is over
-            if (numWhiteCells === numBlackCells) {
-                winner = 'tie';
-            } else {
-                winner = numWhiteCells > numBlackCells ? 'white' : 'black';
-            }
-
-            setWinner(winner);
-        }
+        sendMove(row, col);
     }
+
+    board.map((row, rowIndex) => {
+        row.map((cell, colIndex) => {
+           console.log(rowIndex, colIndex, cell);
+        });
+                });
 
     return (
         <div>
+            <CurrentStatus status={status} winnerName={winnerName}
+                userOfNextMove={userOfNextMove} currentPlayerName={userName} playerNames={playerNames} />
+            <div>{additionalMessage}</div>
             <div className="game-board">
                 {board.map((row, rowIndex) => (
                     <div key={rowIndex} className="row">
@@ -157,24 +194,12 @@ export function Reversi() {
                             <div
                                 key={colIndex}
                                 className={`cell ${cell}-piece`}
-                                onClick={() => handleClick(rowIndex, colIndex, board, setBoard, setWinner)}
+                                onClick={() => handleClick(rowIndex, colIndex, board)}
                             />
                         ))}
                     </div>
                 ))}
             </div>
-            <div className="status">
-                {winner ? (
-                    winner === 'tie' ? (
-                        <p>It's a tie!</p>
-                    ) : (
-                        <p>{winner === 'black' ? 'Black' : 'White'} wins!</p>
-                    )
-                ) : (
-                        <p>{player === 'black' ? 'Black' : 'White'}'s turn</p>
-                )}
-            </div>
-            <div>{additionalMessage}</div>
         </div>
     );
 }

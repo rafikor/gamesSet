@@ -10,7 +10,7 @@ const context =  [
     "/tictactoe.html",
     "/counter",
     "/fetch-data",
-    "/TicTacToeHub"
+    "/GameHub"
 ];
 
 module.exports = function(app) {

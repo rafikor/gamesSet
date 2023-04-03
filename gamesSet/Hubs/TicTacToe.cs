@@ -75,6 +75,11 @@ namespace gamesSet.Hubs
         public static void InitGameSpecificParam(Dictionary<string, object> gameParams, GameSession gameSession)
         {
             gameParams["playerWithO"] = gameSession.UserCreator;
+
+            var state = new TicTacToeState();
+
+            var gameState = JsonConvert.SerializeObject(state);
+            gameSession.GameState = gameState;
         }
     }
 }

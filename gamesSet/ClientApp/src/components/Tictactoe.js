@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from "react-router-dom";
-import { HubConnectionBuilder }  from '@microsoft/signalr';
+import { HubConnectionBuilder } from '@microsoft/signalr';
+
+import { CurrentStatus } from './CurrentStatus';
 
 const styleButton = {
     background: "lightblue",
@@ -21,57 +23,6 @@ const style = {
     gridTemplate: "repeat(3, 1fr) / repeat(3, 1fr)",
 };
 
-const SessionStatus = {
-    created: 1,
-    activeGame: 2,
-    finished: 3,
-    cancelled: 4
-}
-
-function CurrentStatus({ status, winnerName, userOfNextMove, currentPlayerName, playerNames }) {
-    let statusString;
-    let opponentName = ''
-    if (winnerName !== '') {
-        if (playerNames[0] === winnerName) {
-            opponentName = playerNames[1];
-        }
-        else { 
-            opponentName = playerNames[0];
-        }
-    }
-    if (status === SessionStatus.created) {
-        statusString = 'Waiting for any other player to connect...';
-    }
-    else {
-        if (status === SessionStatus.finished) {
-            statusString = 'Game is ended. Winner: ' + winnerName + '. Opponent was' + opponentName;
-        }
-        else {
-            if (status === SessionStatus.cancelled) {
-                if (winnerName !== '') {
-                    statusString = 'Winner: ' + winnerName + ' (opponent ' + opponentName+ ' thought too long)';
-                }
-                else {
-                    statusString = 'Session is expired'
-                }
-            }
-            else {
-                if (currentPlayerName === userOfNextMove) {
-                    statusString = 'Now is your turn';
-                }
-                else {
-                    statusString = 'Next player: ' + userOfNextMove;
-                }
-            }
-        }
-    }
-
-
-    return <div>
-            <div>Current player is {currentPlayerName}</div>
-            <div className="status">{statusString}</div>
-        </div>
-}
 
 
 function Square({ value, onSquareClick, disabled }) {
@@ -119,7 +70,7 @@ export function Tictactoe() {
 
     useEffect(() => {
         const newConnection = new HubConnectionBuilder()
-            .withUrl("/TicTacToeHub?userName=" + userName + "&gameSessionId=" + sessionId).build();
+            .withUrl("/GameHub?userName=" + userName + "&gameSessionId=" + sessionId).build();
 
         newConnection.on("ReceiveState", function (sessionJson) {
             let session = JSON.parse(sessionJson);

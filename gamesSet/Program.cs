@@ -31,7 +31,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=GameSessions}/{action=Index}/{id?}");
 
-app.MapHub<GameHub>("/TicTacToeHub");
+app.MapHub<GameHub>("/GameHub");
 
 //app.MapFallbackToFile("index.html"); ;
 

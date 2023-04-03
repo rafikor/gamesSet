@@ -90,7 +90,7 @@ export function Home() {
     return (
         <div>
             <InputUser />
-            <GamesListToCreateSession games={[{ gameName: "Tick-Tack-Toe" }, { gameName: "Labyrinth" }]} />
+            <GamesListToCreateSession games={[{ gameName: "Tick-Tack-Toe" }, { gameName: "Reversi" }]} />
             <SessionsToPlayList sessions={activeSessions} />
         </div>
     );

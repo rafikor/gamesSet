@@ -104,6 +104,7 @@ namespace gamesSet.Hubs
                             TicTacToe.processMove(gameSession, userName, move);
                             break;
                         case 1:
+                            Reversi.processMove(gameSession, userName, move);
                             break;
                         default:
                             throw new Exception("Not implemented");
