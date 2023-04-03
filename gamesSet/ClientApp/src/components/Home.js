@@ -44,12 +44,11 @@ function GamesListToCreateSession({ games }) {
     </ul>)
 }
 
-
-function SessionsToPlayList({ sessions }) {
+function SessionsToList({ sessions, title, isCheckUserName, getSessionButtonTitle }) {
 
     let keys = Object.entries(sessions);
 
-    return (<ul> Created sessions (you can connect and play):
+    return (<ul> {title }:
         {keys.length === 0 &&
             <li>There are no sessions</li>
         }
@@ -60,40 +59,14 @@ function SessionsToPlayList({ sessions }) {
                         id={key[0] + '_b'}
                         onClick={() => {
                             let userName = document.getElementById('playername').value;
-                            if (!userName) {
+                            if (!userName && isCheckUserName) {
                                 alertUserNeedName();
                             }
                             else {
                                 window.location.href = "/" + key[1]["gameName"] + "?gameSessionId=" + key[0] + "&playerName=" + userName;
                             }
                         }}
-                    >Connect to session #{key[0]} for {key[1]["gameName"]} created by {key[1]["creator"]}
-                        
-                    </button>
-                </li>
-            ))}
-        
-    </ul>)
-}
-
-function SessionsToSpectateList({ sessions }) {
-
-    let keys = Object.entries(sessions);
-
-    return (<ul> Actively played sessions (you can connect and watch):
-        {keys.length===0 &&
-            <li>There are no sessions</li>
-            }
-        {
-            keys.map((key) => (
-                <li key={key[0]}>
-                    <button
-                        id={key[0] + '_b'}
-                        onClick={() => {
-                            let userName = document.getElementById('playername').value;
-                            window.location.href = "/" + key[1]["gameName"] + "?gameSessionId=" + key[0] + "&playerName=" + userName;;
-                        }}
-                    >Connect to session #{key[0]} for {key[1]["gameName"]} played by {key[1]["creator"]} and {key[1]["secondUser"]}
+                    >{getSessionButtonTitle(key[0], key[1]["gameName"], key[1]["creator"], key[1]["secondUser"]) }
 
                     </button>
                 </li>
@@ -102,6 +75,13 @@ function SessionsToSpectateList({ sessions }) {
     </ul>)
 }
 
+function getCreatedSessionButtonTitle(sessionId, gameName, creator,secondUser) {
+    return 'Connect to session #' + sessionId + ' for ' + gameName + ' created by ' + creator;
+}
+
+function getActiveSessionButtonTitle(sessionId, gameName, creator, secondUser) {
+    return 'Connect to session #' + sessionId + ' for ' + gameName + ' played by ' + creator + ' and ' + secondUser;
+}
 
 export function Home() {
 
@@ -136,8 +116,10 @@ export function Home() {
         <div>
             <InputUser />
             <GamesListToCreateSession games={[{ gameName: "Tick-Tack-Toe" }, { gameName: "Reversi" }]} />
-            <SessionsToPlayList sessions={createdSessions} />
-            <SessionsToSpectateList sessions={activeSessions} />
+            <SessionsToList sessions={createdSessions} title='Created sessions (you can connect and play):'
+                isCheckUserName={true} getSessionButtonTitle={getCreatedSessionButtonTitle} />
+            <SessionsToList sessions={activeSessions} title='Actively played sessions (you can connect and watch):'
+                isCheckUserName={false} getSessionButtonTitle={getActiveSessionButtonTitle} />
         </div>
     );
 }
