@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from "react-router-dom";
-import { HubConnectionBuilder }  from '@microsoft/signalr';
 
 export const SessionStatus = {
     created: 1,
@@ -41,7 +39,7 @@ export function CurrentStatus({ status, winnerName, userOfNextMove, currentPlaye
     else {
         if (status === SessionStatus.finished) {
             statusString = 'Game is ended. '
-            if (currentPlayerName == winnerName) {
+            if (currentPlayerName === winnerName) {
                 statusString = statusString + 'You win, congrats! ';
             }
             else {
@@ -148,4 +146,13 @@ export function utcStringTimeToLocalTime(stringTime) {
     );
     const localTime = new Date(milliseconds);
     return localTime;
+}
+
+export const sendMoveFunc = async (connection, userName, sessionId, move) => {
+    try {
+        await connection.send('ReceiveMove', userName, sessionId, move);
+    }
+    catch (e) {
+        console.log(e);
+    }
 }

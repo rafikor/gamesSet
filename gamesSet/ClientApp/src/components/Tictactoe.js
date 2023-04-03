@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from "react-router-dom";
-import { HubConnectionBuilder } from '@microsoft/signalr';
 
-import { SessionStatus, getOpponent} from './Utils';
+import { SessionStatus, getOpponent, sendMoveFunc } from './Utils';
 
 const styleButton = {
     background: "lightblue",
@@ -51,15 +49,6 @@ function Board({ squares, sendMove, disabled }) {
                 <Square value={squares[8]} onSquareClick={() => handleClick(8)} disabled={disabled} />
             </div>
     );
-}
-
-const sendMoveFunc = async (connection, userName, sessionId, move) => {
-    try {
-        await connection.send('ReceiveMove', userName, sessionId, move);
-    }
-    catch (e) {
-        console.log(e);
-    }
 }
 
 function getWhoIsWhoTicTacToe(playerNames, userName, status, playerWithO) {

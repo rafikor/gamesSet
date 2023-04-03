@@ -14,7 +14,7 @@ const AppRoutes = [
     },
     {
         path: '/Reversi',
-        element: <Reversi />
+        element: <Game SpecificGame={Reversi} />
     },
 ];
 

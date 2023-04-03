@@ -1,130 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from "react-router-dom";
-import { HubConnectionBuilder } from '@microsoft/signalr';
 
 import './Reversi.css';
 
-import { CurrentStatus } from './Utils';
+import { sendMoveFunc, SessionStatus, getOpponent } from './Utils';
 
-export function Reversi() {
-    const [board, setBoard] = useState(Array(8).fill(Array(8).fill(null)));
-    const [player, setPlayer] = useState('black');
-    const [winner, setWinner] = useState('');
-    const [additionalMessage, setAdditionalMessage] = useState('');
-
-    const [searchParams, setSearchParams] = useSearchParams(window.location.search);
-    const [userName, setUserName] = useState(searchParams.get("playerName"));
-    const [playerNames, setPlayerNames] = useState([]);
-    const [sessionId, setSessionId] = useState(searchParams.get("gameSessionId"));
-    const [canMove, setCanMove] = useState(false);
-    const [userOfNextMove, setUserOfNextMove] = useState("");
-    const [status, setStatus] = useState(-1);
-    const [winnerName, setWinnerName] = useState("");
-    const [connection, setConnection] = useState(null);
-
-    const [playerWithWhite, setPlayerWithWhite] = useState("");
-
-    //const [boardValues, setBoardValues] = useState([Array(9).fill(null)]);
-
-
-    useEffect(() => {
-        let inputName = userName;
-        if (!inputName) {
-            inputName = window.prompt('Please enter your name (nick)\n(Without name, you will be a spectator)');
-        }
-        setUserName(inputName);
-
-        const newConnection = new HubConnectionBuilder()
-            .withUrl("/GameHub?userName=" + inputName + "&gameSessionId=" + sessionId).build();
-
-        newConnection.on("ReceiveState", function (sessionJson) {
-            let session = JSON.parse(sessionJson);
-            let localWinnerName = session["WinnerName"];
-            let newStatus = session["Status"];
-            let userMove = session['NextMoveForUser'];
-            setStatus(newStatus);
-            var stateJsonParsed = JSON.parse(session["GameState"]);
-            setAdditionalMessage(stateJsonParsed['AdditionalMessage'])
-
-            setUserOfNextMove(userMove);
-            setCanMove(userMove == inputName && newStatus == 2);
-            setWinnerName(localWinnerName);
-            console.log(localWinnerName);
-            let gameParams = JSON.parse(session["GameParams"]);
-
-            setPlayerWithWhite(gameParams["playerWithWhites"]);
-            if (gameParams["playerWithWhites"] === inputName) {
-                setPlayer('white');
-            }
-            else {
-                setPlayer('black');
-            }
-
-            playerNames.push(session["UserCreator"]);
-            playerNames.push(session["SecondUser"]);
-            setPlayerNames(playerNames)
-
-            const newBoard = board.map((rowArray, row) =>
-                rowArray.map((cell, col) => {
-                    let color = null;
-                    let colorCode = stateJsonParsed['Board'][row][col];
-                    if (colorCode === 1) {
-                        color = 'white';
-                        // console.log(color);
-                    }
-                    if (colorCode === 2) {
-                        color = 'black';
-                        // console.log(color);
-                    }
-                    return color;
-                })
-            );
-            setBoard(newBoard);
-            console.log(newBoard);
-        });
-
-        newConnection.start({ withCredentials: false }).then(function () {
-            console.log('connected');
-        }).catch(function (err) {
-            return console.error(err.toString());
-        });
-
-        setConnection(newConnection);
-
-        return () => {
-            newConnection.stop();
-        };
-    }, []);
-
-    const sendMove = async (row, col) => {
-        try {
-            var move = row * 8 + col;
-            await connection.send('ReceiveMove', userName, sessionId, move);
-            console.log('Send move ' + move);
-        }
-        catch (e) {
-            console.log(e);
-        }
-    }
-
+function getWhoIsWhoReversi(playerNames, userName, status, playerWithWhite) {
     let whoIsWho = ''
-    if (playerNames[0] === userName || playerNames[1] === userName) {
+    let ifUserInPlayerList = playerNames[0] === userName || playerNames[1] === userName;
+    if (ifUserInPlayerList) {
         if (playerWithWhite === userName) {
-            whoIsWho = 'Your discs are white';
+            whoIsWho = 'your discs are white';
         }
         else {
-            whoIsWho = 'Your discs are black';
+            whoIsWho = 'your discs are black';
+        }
+        if (status !== SessionStatus.finished && status !== SessionStatus.created) {
+            let opponentAddition = getOpponent(playerNames, userName);
+            whoIsWho = opponentAddition + ' is opponent, ' + whoIsWho;
         }
     }
     else {
-        let opponent = '';
-        if (playerWithWhite == playerNames[0]) {
-            opponent = playerNames[1];
+        let opponent = getOpponent(playerNames, playerWithWhite);
+        whoIsWho = playerWithWhite + ' has white discs; ' + (!opponent ? 'other player ' : opponent) + ' has black discs';
+    }
+    return whoIsWho;
+}
+
+export function Reversi({ connection, userName, sessionId,
+    playerNames, gameState, gameParams, status, canMove }) {
+    const [board, setBoard] = useState(Array(8).fill(Array(8).fill(null)));
+    const [player, setPlayer] = useState('black');
+    const [additionalMessage, setAdditionalMessage] = useState('');
+    const [playerWithWhite, setPlayerWithWhite] = useState("");
+
+    useEffect(() => {
+        setPlayerWithWhite(gameParams["playerWithWhites"]);
+        if (gameParams["playerWithWhites"] === userName) {
+            setPlayer('white');
         }
         else {
-            opponent = playerNames[0];
+            setPlayer('black');
         }
-        whoIsWho = playerWithWhite + ' has white discs; ' + (!opponent ? 'other player ':opponent) + ' has black discs';
+        const newBoard = board.map((rowArray, row) =>
+            rowArray.map((cell, col) => {
+                let color = null;
+                let colorCode = gameState['Board'][row][col];
+                if (colorCode === 1) {
+                    color = 'white';
+                }
+                if (colorCode === 2) {
+                    color = 'black';
+                }
+                return color;
+            })
+        );
+        setBoard(newBoard);
+    }, [gameState]);
+
+    const sendMove = async (row, col) => {
+        var move = row * 8 + col;
+        sendMoveFunc(connection, userName, sessionId, move);
     }
 
     function tryMove(board, row, col, player) {
@@ -186,21 +121,15 @@ export function Reversi() {
         sendMove(row, col);
     }
 
-    board.map((row, rowIndex) => {
-        row.map((cell, colIndex) => {
-           console.log(rowIndex, colIndex, cell);
-        });
-    });
-
     let disabledAddition = '';
     if (!canMove) {
         disabledAddition = '-gray';
     }
 
+    let whoIsWho = getWhoIsWhoReversi(playerNames, userName, status, playerWithWhite);
+
     return (
-        <div>
-            <CurrentStatus status={status} winnerName={winnerName}
-                userOfNextMove={userOfNextMove} currentPlayerName={userName} playerNames={playerNames} />
+        <div className="game">
             <div>{whoIsWho}</div>
             <div>{additionalMessage}</div>
             <div className="game-board">
