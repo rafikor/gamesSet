@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from "react-router-dom";
 import { HubConnectionBuilder } from '@microsoft/signalr';
 
-import { CurrentStatus, Timer, SessionStatus, getOpponent, utcStringTimeToLocalTime } from './CurrentStatus';
+import { SessionStatus, getOpponent} from './Utils';
 
 const styleButton = {
     background: "lightblue",

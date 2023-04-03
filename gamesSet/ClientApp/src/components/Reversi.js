@@ -4,7 +4,7 @@ import { HubConnectionBuilder } from '@microsoft/signalr';
 
 import './Reversi.css';
 
-import { CurrentStatus } from './CurrentStatus';
+import { CurrentStatus } from './Utils';
 
 export function Reversi() {
     const [board, setBoard] = useState(Array(8).fill(Array(8).fill(null)));

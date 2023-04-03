@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from "react-router-dom";
 import { HubConnectionBuilder } from '@microsoft/signalr';
 
-import { CurrentStatus, Timer, SessionStatus, utcStringTimeToLocalTime } from './CurrentStatus';
+import { CurrentStatus, Timer, SessionStatus, utcStringTimeToLocalTime } from './Utils';
 
 export function Game({SpecificGame }) {
     const [searchParams, setSearchParams] = useSearchParams(window.location.search);
