@@ -11,7 +11,7 @@ builder.Services.AddDbContext<gamesSetContext>(options =>
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR();
-builder.Services.AddSingleton<TicTacToeHub>();
+builder.Services.AddSingleton<GameHub>();
 
 var app = builder.Build();
 
@@ -31,7 +31,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=GameSessions}/{action=Index}/{id?}");
 
-app.MapHub<TicTacToeHub>("/TicTacToeHub");
+app.MapHub<GameHub>("/TicTacToeHub");
 
 //app.MapFallbackToFile("index.html"); ;
 

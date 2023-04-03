@@ -10,6 +10,7 @@ using gamesSet.Models;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.SignalR;
 using gamesSet.Hubs;
+using static System.Collections.Specialized.BitVector32;
 
 namespace gamesSet.Controllers
 {
@@ -17,10 +18,10 @@ namespace gamesSet.Controllers
     {
         private readonly gamesSetContext _context;
         private readonly ILogger<GameSessionsController> _logger;
-        private readonly IHubContext<TicTacToeHub> _hubContext;
+        private readonly IHubContext<GameHub> _hubContext;
         private readonly IServiceProvider _sp;
 
-        public GameSessionsController(gamesSetContext context, ILogger<GameSessionsController> logger, IHubContext<TicTacToeHub> hubContext, IServiceProvider sp)
+        public GameSessionsController(gamesSetContext context, ILogger<GameSessionsController> logger, IHubContext<GameHub> hubContext, IServiceProvider sp)
         {
             _context = context;
             _logger = logger;
@@ -111,9 +112,20 @@ namespace gamesSet.Controllers
 
             var gameParams = new Dictionary<string, object>
             {
-                { "gameId", gameId },
-                { "playerWithX", gameSession.UserCreator }
+                { "gameId", gameId }
             };
+
+            switch(gameId)//TODO: not good
+            {
+                case 0: 
+                    TicTacToe.InitGameSpecificParam(gameParams, gameSession);
+                    break;
+                case 1:
+                    break;
+                default:
+                    throw new Exception("Not implemented");
+            }
+            
 
             gameSession.GameParams = JsonConvert.SerializeObject(gameParams);
             gameSession.GameId = gameId;
@@ -129,7 +141,7 @@ namespace gamesSet.Controllers
             string gameAddress = gameId switch
             {
                 0 =>"tictactoe",
-                1 => "labyrinth",
+                1 => "reversi",
                 _ =>"error"
             };
 
@@ -142,15 +154,30 @@ namespace gamesSet.Controllers
             var newSessions = _context.GameSession.Where(x=>x.Status == SessionStatus.created);
 
             var dataToSend = new Dictionary<int, Dictionary<string,string> > ();
+            var tempUtil = new UtilitityDb(_sp);
             foreach (var session in newSessions)
             {
-                new TicTacToeHub(_hubContext,_sp).CheckExpiredWaitingSession(session);
-                if(session.Status == SessionStatus.cancelled)
+                tempUtil.CheckExpiredWaitingSession(session);
+                if (session.Status == SessionStatus.cancelled)
                 {
                     continue;
                 }
                 var dataForGame = new Dictionary<string, string>();
-                dataForGame["gameName"] = "TicTacToe";
+                
+                string gameName = "";
+                switch (session.GameId)//TODO: refactor
+                {
+                    case 0:
+                        gameName = "TicTacToe";
+                        break;
+                    case 1:
+                        gameName = "Reversi";
+                        break;
+                    default:
+                        throw new Exception("Not implemented");
+                }
+
+                dataForGame["gameName"] = gameName;
                 dataForGame["creator"] = session.UserCreator;
                 dataForGame["gameId"] = session.GameId.ToString();
                 dataToSend[session.Id] = dataForGame;

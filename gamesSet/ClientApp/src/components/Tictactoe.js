@@ -113,7 +113,7 @@ export function Tictactoe() {
     const [winnerName, setWinnerName] = useState("");
     const [connection, setConnection] = useState(null);
 
-    const [playerWithX, setPlayerWithX] = useState("");
+    const [playerWithO, setPlayerWithO] = useState("");
 
     const [boardValues, setBoardValues] = useState([Array(9).fill(null)]);
 
@@ -137,7 +137,7 @@ export function Tictactoe() {
             console.log('Xs5 ');
             let gameParams = JSON.parse(session["GameParams"]);
 
-            setPlayerWithX(gameParams["playerWithX"]);
+            setPlayerWithO(gameParams["playerWithO"]);
 
             playerNames.push(session["UserCreator"]);
             playerNames.push(session["SecondUser"]);
@@ -178,22 +178,22 @@ export function Tictactoe() {
 
     let whoIsWho = ''
     if (playerNames[0] === userName || playerNames[1] === userName) {
-        if (playerWithX === userName) {
-            whoIsWho = 'Your are X';
+        if (playerWithO === userName) {
+            whoIsWho = 'Your are O';
         }
         else {
-            whoIsWho = 'Your are O';
+            whoIsWho = 'Your are X';
         }
     }
     else {
         let opponent = '';
-        if (playerWithX == playerNames[0]) {
+        if (playerWithO == playerNames[0]) {
             opponent = playerNames[1];
         }
         else {
             opponent = playerNames[0];
         }
-        whoIsWho = playerWithX + ' moves by X; ' + opponent + ' moves by O';
+        whoIsWho = playerWithO + ' moves by O; ' + opponent + ' moves by X';
     }
 
     return (
