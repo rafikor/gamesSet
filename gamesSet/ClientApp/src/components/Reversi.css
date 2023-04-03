@@ -29,3 +29,13 @@
     background-color: white;
     border-radius: 50%;
 }
+
+.black-gray-piece {
+    background-color: #454545;
+    border-radius: 50%;
+}
+
+.white-gray-piece {
+    background-color: lightgray;
+    border-radius: 50%;
+}

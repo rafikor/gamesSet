@@ -9,23 +9,51 @@ export const SessionStatus = {
     cancelled: 4
 }
 
+
+function getOpponent(playerNames, playerName) {
+    let opponentName;
+    if (playerNames[0] === playerName) {
+        opponentName = playerNames[1];
+    }
+    else {
+        opponentName = playerNames[0];
+    }
+    return opponentName;
+}
+
 export function CurrentStatus({ status, winnerName, userOfNextMove, currentPlayerName, playerNames }) {
     let statusString;
+    let isPlayerSpectator = !playerNames.some(e => e === currentPlayerName);
     let opponentName = ''
     if (winnerName !== '') {
-        if (playerNames[0] === winnerName) {
-            opponentName = playerNames[1];
+        if (!isPlayerSpectator) {
+            opponentName = getOpponent(playerNames, currentPlayerName);
         }
         else {
-            opponentName = playerNames[0];
+            opponentName = getOpponent(playerNames, winnerName);
         }
+
     }
+    
     if (status === SessionStatus.created) {
         statusString = 'Waiting for any other player to connect...';
     }
     else {
         if (status === SessionStatus.finished) {
-            statusString = 'Game is ended. Winner: ' + winnerName + '. Opponent was' + opponentName;
+            statusString = 'Game is ended. '
+            if (currentPlayerName == winnerName) {
+                statusString = statusString + 'You win, congrats! ';
+            }
+            else {
+                if (playerNames.some(e => e === currentPlayerName)) {
+                    statusString = statusString + 'You lose. '
+                }
+                else {
+                    statusString = statusString + 'Winner: ' + winnerName+'. ';
+                }
+                
+            }
+            statusString = statusString + 'Opponent was ' + opponentName;
         }
         else {
             if (status === SessionStatus.cancelled) {
@@ -47,9 +75,17 @@ export function CurrentStatus({ status, winnerName, userOfNextMove, currentPlaye
         }
     }
 
+    
 
     return <div>
-        <div>Current player is {currentPlayerName}</div>
+        {isPlayerSpectator &&
+            <div>
+                You are in spectating mode
+            </div>
+        }
+        {currentPlayerName &&
+            <div>Current player is {currentPlayerName}</div>
+        }
         <div className="status">{statusString}</div>
     </div>
 }

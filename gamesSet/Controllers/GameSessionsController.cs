@@ -108,7 +108,7 @@ namespace gamesSet.Controllers
 
             gameSession.UserCreator = userName;
             gameSession.Status = SessionStatus.created;
-            gameSession.CreationTime = DateTime.Now;
+            gameSession.CreationTime = DateTime.UtcNow;
 
             var gameParams = new Dictionary<string, object>
             {

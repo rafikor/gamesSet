@@ -12,7 +12,7 @@ namespace gamesSet.Hubs
         }
         public void CheckExpiredWaitingSession(GameSession session)
         {
-            if (session.Status == SessionStatus.created && (DateTime.Now - session.CreationTime).TotalMinutes > 5)
+            if (session.Status == SessionStatus.created && (DateTime.UtcNow - session.CreationTime).TotalMinutes > 5)
             {
                 session.Status = SessionStatus.cancelled;
                 UpdateSession(session);

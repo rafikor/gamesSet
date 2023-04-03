@@ -26,6 +26,8 @@ namespace gamesSet.Hubs
 
             GameSession session = util.FindSession(sessionId);
 
+            bool isSpectator = false;
+
             util.CheckExpiredWaitingSession(session);
             if (session.Status == SessionStatus.created)
             {
@@ -44,7 +46,7 @@ namespace gamesSet.Hubs
                         {
                             session.SecondUser = userName;
                             session.Status = SessionStatus.activeGame;
-                            session.LastMoveTime = DateTime.Now;
+                            session.LastMoveTime = DateTime.UtcNow;
                             session.NextMoveForUser = userName;
 
                             //var state = JsonConvert.DeserializeObject<TicTacToeState>(session.GameState);
@@ -59,14 +61,29 @@ namespace gamesSet.Hubs
                     util.UpdateSession(session);
                 }
             }
-               
-            Groups.AddToGroupAsync(Context.ConnectionId, GetUserDefGroupName(userName, sessionIdString));
-
-            SendState(userName, session);
-            if (session.Status == SessionStatus.activeGame)
+            else
             {
-                SendState(utilLogic.GetNamesOfOtherUsers(session, userName)[0], session);
+                if (session.UserCreator != userName && session.SecondUser != userName)
+                {
+                    isSpectator= true;
+                }
             }
+
+            if (isSpectator)
+            {
+                Groups.AddToGroupAsync(Context.ConnectionId, GetSessionGroupNameForSpectator(sessionIdString));
+                SendStateToSpectators(session);
+            }
+            else
+            {
+                Groups.AddToGroupAsync(Context.ConnectionId, GetUserDefGroupName(userName, sessionIdString));
+                SendStateToActiveUser(userName, session);
+                if (session.Status == SessionStatus.activeGame)
+                {
+                    SendStateToActiveUser(utilLogic.GetNamesOfOtherUsers(session, userName)[0], session);
+                }
+            }
+
 
             return base.OnConnectedAsync();
         }
@@ -76,10 +93,25 @@ namespace gamesSet.Hubs
             return "userName_" + userName + "_sessionId_" + sessionId;
         }
 
-        public async Task SendState(string userName, GameSession session)
+        private string GetSessionGroupNameForSpectator(string sessionId)
+        {
+            return "sessionId_" + sessionId;
+        }
+
+        public async Task SendStateToActiveUser(string userName, GameSession session)
+        {
+            string groupName = GetUserDefGroupName(userName, session.Id.ToString());
+            await SendStateToGivenGroup(session, groupName);
+        }
+        public async Task SendStateToSpectators(GameSession session)
+        {
+            string groupName = GetSessionGroupNameForSpectator(session.Id.ToString());
+            await SendStateToGivenGroup(session, groupName);
+        }
+        private async Task SendStateToGivenGroup(GameSession session, string groupName)
         {
             var jsonToSend = JsonConvert.SerializeObject(session);
-            await _context.Clients.Group(GetUserDefGroupName(userName, session.Id.ToString())).SendAsync("ReceiveState", jsonToSend);
+            await _context.Clients.Group(groupName).SendAsync("ReceiveState", jsonToSend);
         }
 
         public async Task ReceiveMove(string userName, string sessionIdString, int move)
@@ -89,9 +121,9 @@ namespace gamesSet.Hubs
             if (gameSession.Status == SessionStatus.activeGame)
             {
 
-                if ((DateTime.Now - gameSession.LastMoveTime).TotalMinutes > 2)//TODO
+                if ((DateTime.UtcNow - gameSession.LastMoveTime).TotalMinutes > 2)//TODO
                 {
-                    gameSession.Status = SessionStatus.finished;
+                    gameSession.Status = SessionStatus.cancelled;
                     gameSession.WinnerName = utilLogic.GetNamesOfOtherUsers(gameSession, userName)[0];
                     util.UpdateSession(gameSession);
                     return;
@@ -110,13 +142,14 @@ namespace gamesSet.Hubs
                             throw new Exception("Not implemented");
                     }
                     
-                    gameSession.LastMoveTime = DateTime.Now;
+                    gameSession.LastMoveTime = DateTime.UtcNow;
 
                 }
                 util.UpdateSession(gameSession);
 
-                SendState(gameSession.UserCreator, gameSession);
-                SendState(gameSession.SecondUser, gameSession);
+                SendStateToActiveUser(gameSession.UserCreator, gameSession);
+                SendStateToActiveUser(gameSession.SecondUser, gameSession);
+                SendStateToSpectators(gameSession);
             }
         }
 

@@ -21,7 +21,7 @@ namespace gamesSet.Hubs
                 }
                 else
                 {
-                    throw new Exception("User is not from this game");
+                    return result;//User is not from this game. This is spectator
                 }
             }
         }

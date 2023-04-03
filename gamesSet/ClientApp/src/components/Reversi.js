@@ -42,6 +42,7 @@ export function Reversi() {
             setUserOfNextMove(userMove);
             setCanMove(userMove == userName && newStatus == 2);
             setWinnerName(localWinnerName);
+            console.log(localWinnerName);
             let gameParams = JSON.parse(session["GameParams"]);
 
             setPlayerWithWhite(gameParams["playerWithWhites"]);
@@ -102,10 +103,10 @@ export function Reversi() {
     let whoIsWho = ''
     if (playerNames[0] === userName || playerNames[1] === userName) {
         if (playerWithWhite === userName) {
-            whoIsWho = 'Your are White';
+            whoIsWho = 'Your discs are white';
         }
         else {
-            whoIsWho = 'Your are Black';
+            whoIsWho = 'Your discs are black';
         }
     }
     else {
@@ -116,7 +117,7 @@ export function Reversi() {
         else {
             opponent = playerNames[0];
         }
-        whoIsWho = playerWithWhite + ' moves by White; ' + opponent + ' moves by Black';
+        whoIsWho = playerWithWhite + ' has white discs; ' + opponent + ' has black discs';
     }
 
     function tryMove(board, row, col, player) {
@@ -159,6 +160,8 @@ export function Reversi() {
     }
 
     function handleClick(row, col, board) {
+        //here some check are presented which are copies of checks at server. 
+        //This is done in order to not overload server
         if (!canMove) {
             return;
         }
@@ -180,12 +183,18 @@ export function Reversi() {
         row.map((cell, colIndex) => {
            console.log(rowIndex, colIndex, cell);
         });
-                });
+    });
+
+    let disabledAddition = '';
+    if (!canMove) {
+        disabledAddition = '-gray';
+    }
 
     return (
         <div>
             <CurrentStatus status={status} winnerName={winnerName}
                 userOfNextMove={userOfNextMove} currentPlayerName={userName} playerNames={playerNames} />
+            <div>{whoIsWho}</div>
             <div>{additionalMessage}</div>
             <div className="game-board">
                 {board.map((row, rowIndex) => (
@@ -193,7 +202,7 @@ export function Reversi() {
                         {row.map((cell, colIndex) => (
                             <div
                                 key={colIndex}
-                                className={`cell ${cell}-piece`}
+                                className={`cell ${cell + disabledAddition}-piece`}
                                 onClick={() => handleClick(rowIndex, colIndex, board)}
                             />
                         ))}
