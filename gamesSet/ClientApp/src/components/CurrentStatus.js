@@ -90,7 +90,7 @@ export function CurrentStatus({ status, winnerName, userOfNextMove, currentPlaye
     </div>
 }
 
-export function Timer({ deadlineDate, textWhenTimerIsNotExpired, TextWhenTimeIsExpired}) {
+export function Timer({ deadlineDate, textWhenTimerIsNotExpired, textWhenTimeIsExpired}) {
     const [days, setDays] = useState(0);
     const [hours, setHours] = useState(0);
     const [minutes, setMinutes] = useState(0);
@@ -117,7 +117,7 @@ export function Timer({ deadlineDate, textWhenTimerIsNotExpired, TextWhenTimeIsE
         const interval = setInterval(() => getTime(), 1000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [deadlineDate]);
 
     return (
         <div>
@@ -128,7 +128,7 @@ export function Timer({ deadlineDate, textWhenTimerIsNotExpired, TextWhenTimeIsE
             }
             {expired &&
                 <div className="timer" style={{ color: 'red' }}>
-                    {TextWhenTimeIsExpired}
+                    {textWhenTimeIsExpired}
                 </div>
             }
             </div>

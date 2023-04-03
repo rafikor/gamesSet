@@ -33,6 +33,12 @@ namespace gamesSet.Migrations
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("ExpirationMoveSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ExpirationSessionSeconds")
+                        .HasColumnType("int");
+
                     b.Property<int>("GameId")
                         .HasColumnType("int");
 

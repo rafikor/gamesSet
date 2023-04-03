@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from "react-router-dom";
 import { HubConnectionBuilder } from '@microsoft/signalr';
 
-import { CurrentStatus , Timer} from './CurrentStatus';
+import { CurrentStatus, Timer, SessionStatus } from './CurrentStatus';
 
 const styleButton = {
     background: "lightblue",
@@ -53,6 +53,20 @@ function Board({ squares, sendMove, disabled }) {
     );
 }
 
+function utcStringTimeToLocalTime(stringTime) {
+    let date = new Date(new Date(stringTime));
+    const milliseconds = Date.UTC(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        date.getHours(),
+        date.getMinutes(),
+        date.getSeconds(),
+    );
+    const localTime = new Date(milliseconds);
+    return localTime;
+}
+
 export function Tictactoe() {
     const [searchParams, setSearchParams] = useSearchParams(window.location.search);
     const [userName, setUserName] = useState(searchParams.get("playerName"));
@@ -63,7 +77,10 @@ export function Tictactoe() {
     const [status, setStatus] = useState(-1);
     const [winnerName, setWinnerName] = useState("");
     const [connection, setConnection] = useState(null);
-    const [creationSessionTime, setCreationSessionTime] = useState(null);
+
+    const [deadlineTime, setDeadlineTime] = useState(null);
+    const [messageBeforeDeadline, setMessageBeforeDeadline] = useState("");
+    const [messageAfterDeadline, setMessageAfterDeadline] = useState("");
 
     const [playerWithO, setPlayerWithO] = useState("");
 
@@ -85,33 +102,44 @@ export function Tictactoe() {
             let newStatus = session["Status"];
             let userMove = session['NextMoveForUser'];
 
-            let date = new Date(new Date(session['CreationTime']));
-            const milliseconds = Date.UTC(
-                date.getFullYear(),
-                date.getMonth(),
-                date.getDate(),
-                date.getHours(),
-                date.getMinutes(),
-                date.getSeconds(),
-            );
-            const localTime = new Date(milliseconds);
-
-            setCreationSessionTime(localTime);
             setStatus(newStatus);
+
+
+            if (newStatus == SessionStatus.created) {
+                let localTime = utcStringTimeToLocalTime(session['CreationTime']);
+                let timeoutSeconds = session['ExpirationSessionSeconds'];
+                setDeadlineTime(new Date(localTime.getTime() + timeoutSeconds * 1000));
+                setMessageBeforeDeadline('Time to expiration of session');
+                setMessageAfterDeadline('Session is expired and is not playable');
+            }
+            else {
+                if (newStatus == SessionStatus.activeGame) {
+                    let localTime = utcStringTimeToLocalTime(session['LastMoveTime']);
+                    let timeoutSeconds = session['ExpirationMoveSeconds'];
+                    setDeadlineTime(new Date(localTime.getTime() + timeoutSeconds * 1000));
+                    setMessageBeforeDeadline('Time to expiration of move');
+                    setMessageAfterDeadline('Time for move is expired, game is over');
+                }
+                else {
+                    setDeadlineTime(null);
+                }
+            }
+
             var stateJsonParsed = JSON.parse(session["GameState"]);
             console.log('Xs2 ');
             console.log('Xs3 ');
             setUserOfNextMove(userMove);
-            setCanMove(userMove == inputName && newStatus==2);
+            setCanMove(userMove == inputName && newStatus == SessionStatus.activeGame);
             setWinnerName(localWinnerName);
             console.log('Xs5 ');
             let gameParams = JSON.parse(session["GameParams"]);
 
             setPlayerWithO(gameParams["playerWithO"]);
 
-            playerNames.push(session["UserCreator"]);
-            playerNames.push(session["SecondUser"]);
-            setPlayerNames(playerNames)
+            let newPlayerNames = [];
+            newPlayerNames.push(session["UserCreator"]);
+            newPlayerNames.push(session["SecondUser"]);
+            setPlayerNames(newPlayerNames)
 
             let newBoard = boardValues.slice();
             for (let i = 0; i < stateJsonParsed['Xs'].length; i++) {
@@ -149,10 +177,22 @@ export function Tictactoe() {
     let whoIsWho = ''
     if (playerNames[0] === userName || playerNames[1] === userName) {
         if (playerWithO === userName) {
-            whoIsWho = 'Your are O';
+            whoIsWho = 'your are O';
         }
         else {
-            whoIsWho = 'Your are X';
+            whoIsWho =  'your are X';
+        }
+        let opponentAddition = '';
+        if (status !== SessionStatus.finished) {
+            if (playerNames[0] === userName) {
+                opponentAddition = playerNames[1];
+            }
+            else {
+                opponentAddition = playerNames[0];
+            }
+            if (opponentAddition) {
+                whoIsWho = opponentAddition + ' is opponent, ' + whoIsWho;
+            }
         }
     }
     else {
@@ -170,9 +210,9 @@ export function Tictactoe() {
     //creationSessionTimeObj && console.log(creationSessionTimeObj.getTime());
     return (
         <div className="game">
-            {creationSessionTime &&
-                <Timer deadlineDate={new Date(creationSessionTime.getTime() + 2 * 60000)}
-                    textWhenTimerIsNotExpired='Time to expiration of session' TextWhenTimeIsExpired='Session is expired' />
+            {deadlineTime &&
+                <Timer deadlineDate={deadlineTime}
+                    textWhenTimerIsNotExpired={messageBeforeDeadline} textWhenTimeIsExpired={messageBeforeDeadline} />
             }
             <div className="game-board">
                 <CurrentStatus status={status} winnerName={winnerName}

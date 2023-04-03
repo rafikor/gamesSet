@@ -18,6 +18,9 @@ namespace gamesSet.Models
 
         //[Column(TypeName = "DateTime2")]
         public DateTime CreationTime { get; set; }
+
+        public int ExpirationSessionSeconds { get; set; } = 60 * 5;
+        public int ExpirationMoveSeconds { get; set; } = 60 * 2;
         public DateTime LastMoveTime { get; set; }
         public SessionStatus Status { get; set; }
 
