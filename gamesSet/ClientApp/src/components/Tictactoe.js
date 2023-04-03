@@ -98,7 +98,7 @@ function getWhoIsWhoTicTacToe(playerNames, userName, status, playerWithO) {
     return whoIsWho;
 }
 
-export function TictactoeSmall({ connection, userName, sessionId,
+export function Tictactoe({ connection, userName, sessionId,
     playerNames, gameState, gameParams, status, canMove }) {
     
     const [playerWithO, setPlayerWithO] = useState("");
@@ -134,7 +134,7 @@ export function TictactoeSmall({ connection, userName, sessionId,
     );
 }
 
-export function Tictactoe() {
+export function Game({SpecificGame }) {
     const [searchParams, setSearchParams] = useSearchParams(window.location.search);
     const [userName, setUserName] = useState(searchParams.get("playerName"));
     const [playerNames, setPlayerNames] = useState([]);
@@ -227,7 +227,7 @@ export function Tictactoe() {
                 textWhenTimeIsExpired={messageAfterDeadline} />
             }
             {connection && gameState && 
-                <TictactoeSmall connection={connection} userName={userName}
+                < SpecificGame connection={connection} userName={userName}
                     sessionId={sessionId} playerNames={playerNames}
                     gameState={gameState} gameParams={gameParams}
                     status={status} canMove={canMove} />

@@ -1,4 +1,4 @@
-import { Tictactoe } from "./components/Tictactoe";
+import { Game, Tictactoe } from "./components/Tictactoe";
 import { Reversi } from "./components/Reversi";
 import { Home } from "./components/Home";
 
@@ -9,7 +9,7 @@ const AppRoutes = [
     },
   {
       path: '/Tictactoe',
-      element: <Tictactoe />
+      element: <Game SpecificGame={Tictactoe} />
     },
     {
         path: '/Reversi',
