@@ -13,6 +13,10 @@ function InputUser() {
         <input type="text" placeholder="Your name" id="playername" />);
 }
 
+function alertUserNeedName() {
+    alert('You must input your name (nick)');
+}
+
 function CreateGameSessionControl({ id, gameName }) {
 
 //    let navigate = useNavigate();
@@ -20,10 +24,14 @@ function CreateGameSessionControl({ id, gameName }) {
     function onClickCreateSession() {
         console.log('t')
         let userName = document.getElementById('playername').value;
-        console.log(userName);
-        let url = '/GameSessions/CreateSessionByUser?userName=' + userName + '&gameId=' + id;
-        //navigate(url);
-        window.location.href = url;
+        if (!userName) {
+            alertUserNeedName();
+        }
+        else {
+            let url = '/GameSessions/CreateSessionByUser?userName=' + userName + '&gameId=' + id;
+            //navigate(url);
+            window.location.href = url;
+        }
     }
     return (<li key={id}>
         <button id={id} onClick={onClickCreateSession}>
@@ -56,7 +64,12 @@ function SessionsToPlayList({ sessions }) {
                         id={key[0] + '_b'}
                         onClick={() => {
                             let userName = document.getElementById('playername').value;
-                            window.location.href = "/" + key[1]["gameName"] + "?gameSessionId=" + key[0] + "&playerName=" + userName;
+                            if (!userName) {
+                                alertUserNeedName();
+                            }
+                            else {
+                                window.location.href = "/" + key[1]["gameName"] + "?gameSessionId=" + key[0] + "&playerName=" + userName;
+                            }
                         }}
                     >Connect to session #{key[0]} for {key[1]["gameName"]} created by {key[1]["creator"]}
                         
@@ -82,7 +95,6 @@ export function Home() {
              .then(response => response.json())
             .then(data => {
                 setActiveSessions(data);
-                console.log(data);
             });
            
     }, []);

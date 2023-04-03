@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from "react-router-dom";
 import { HubConnectionBuilder } from '@microsoft/signalr';
 
-import { CurrentStatus } from './CurrentStatus';
+import { CurrentStatus , Timer} from './CurrentStatus';
 
 const styleButton = {
     background: "lightblue",
@@ -63,14 +63,20 @@ export function Tictactoe() {
     const [status, setStatus] = useState(-1);
     const [winnerName, setWinnerName] = useState("");
     const [connection, setConnection] = useState(null);
+    const [creationSessionTime, setCreationSessionTime] = useState(null);
 
     const [playerWithO, setPlayerWithO] = useState("");
 
     const [boardValues, setBoardValues] = useState([Array(9).fill(null)]);
 
     useEffect(() => {
+        let inputName = userName;
+        if (!inputName) {
+            inputName = window.prompt('Please enter your name (nick)\n(Without name, you will be a spectator)');
+        }
+        setUserName(inputName);
         const newConnection = new HubConnectionBuilder()
-            .withUrl("/GameHub?userName=" + userName + "&gameSessionId=" + sessionId).build();
+            .withUrl("/GameHub?userName=" + inputName + "&gameSessionId=" + sessionId).build();
 
         newConnection.on("ReceiveState", function (sessionJson) {
             let session = JSON.parse(sessionJson);
@@ -78,12 +84,25 @@ export function Tictactoe() {
             console.log('Xs ');
             let newStatus = session["Status"];
             let userMove = session['NextMoveForUser'];
+
+            let date = new Date(new Date(session['CreationTime']));
+            const milliseconds = Date.UTC(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate(),
+                date.getHours(),
+                date.getMinutes(),
+                date.getSeconds(),
+            );
+            const localTime = new Date(milliseconds);
+
+            setCreationSessionTime(localTime);
             setStatus(newStatus);
             var stateJsonParsed = JSON.parse(session["GameState"]);
             console.log('Xs2 ');
             console.log('Xs3 ');
             setUserOfNextMove(userMove);
-            setCanMove(userMove == userName && newStatus==2);
+            setCanMove(userMove == inputName && newStatus==2);
             setWinnerName(localWinnerName);
             console.log('Xs5 ');
             let gameParams = JSON.parse(session["GameParams"]);
@@ -144,11 +163,17 @@ export function Tictactoe() {
         else {
             opponent = playerNames[0];
         }
-        whoIsWho = playerWithO + ' moves by O; ' + opponent + ' moves by X';
+        whoIsWho = playerWithO + ' moves by O; ' + (!opponent ? 'other player ' : opponent) + ' moves by X';
     }
-
+    //creationSessionTime && console.log(creationSessionTime);
+    //let creationSessionTimeObj = creationSessionTime ? new Date(creationSessionTime):null;
+    //creationSessionTimeObj && console.log(creationSessionTimeObj.getTime());
     return (
         <div className="game">
+            {creationSessionTime &&
+                <Timer deadlineDate={new Date(creationSessionTime.getTime() + 2 * 60000)}
+                    textWhenTimerIsNotExpired='Time to expiration of session' TextWhenTimeIsExpired='Session is expired' />
+            }
             <div className="game-board">
                 <CurrentStatus status={status} winnerName={winnerName}
                     userOfNextMove={userOfNextMove} currentPlayerName={userName} playerNames={playerNames} />

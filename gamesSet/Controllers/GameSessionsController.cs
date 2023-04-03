@@ -126,7 +126,6 @@ namespace gamesSet.Controllers
                 default:
                     throw new Exception("Not implemented");
             }
-            
 
             gameSession.GameParams = JsonConvert.SerializeObject(gameParams);
             gameSession.GameId = gameId;

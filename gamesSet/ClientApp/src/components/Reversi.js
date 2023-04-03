@@ -26,9 +26,16 @@ export function Reversi() {
 
     //const [boardValues, setBoardValues] = useState([Array(9).fill(null)]);
 
+
     useEffect(() => {
+        let inputName = userName;
+        if (!inputName) {
+            inputName = window.prompt('Please enter your name (nick)\n(Without name, you will be a spectator)');
+        }
+        setUserName(inputName);
+
         const newConnection = new HubConnectionBuilder()
-            .withUrl("/GameHub?userName=" + userName + "&gameSessionId=" + sessionId).build();
+            .withUrl("/GameHub?userName=" + inputName + "&gameSessionId=" + sessionId).build();
 
         newConnection.on("ReceiveState", function (sessionJson) {
             let session = JSON.parse(sessionJson);
@@ -40,13 +47,13 @@ export function Reversi() {
             setAdditionalMessage(stateJsonParsed['AdditionalMessage'])
 
             setUserOfNextMove(userMove);
-            setCanMove(userMove == userName && newStatus == 2);
+            setCanMove(userMove == inputName && newStatus == 2);
             setWinnerName(localWinnerName);
             console.log(localWinnerName);
             let gameParams = JSON.parse(session["GameParams"]);
 
             setPlayerWithWhite(gameParams["playerWithWhites"]);
-            if (gameParams["playerWithWhites"] === userName) {
+            if (gameParams["playerWithWhites"] === inputName) {
                 setPlayer('white');
             }
             else {
@@ -117,7 +124,7 @@ export function Reversi() {
         else {
             opponent = playerNames[0];
         }
-        whoIsWho = playerWithWhite + ' has white discs; ' + opponent + ' has black discs';
+        whoIsWho = playerWithWhite + ' has white discs; ' + (!opponent ? 'other player ':opponent) + ' has black discs';
     }
 
     function tryMove(board, row, col, player) {

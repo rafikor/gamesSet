@@ -29,7 +29,8 @@ namespace gamesSet.Hubs
             bool isSpectator = false;
 
             util.CheckExpiredWaitingSession(session);
-            if (session.Status == SessionStatus.created)
+            //userName=="null" - no name, it is spectator
+            if (userName != "null" && session.Status == SessionStatus.created)
             {
 
                 //if this is not reconnect
@@ -82,6 +83,7 @@ namespace gamesSet.Hubs
                 {
                     SendStateToActiveUser(utilLogic.GetNamesOfOtherUsers(session, userName)[0], session);
                 }
+                SendStateToSpectators(session);
             }
 
 
