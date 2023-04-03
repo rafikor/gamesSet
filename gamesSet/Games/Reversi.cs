@@ -1,14 +1,15 @@
 ﻿using gamesSet.Models;
+using gamesSet.Utils;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
 using System.Numerics;
 
-namespace gamesSet.Hubs
+namespace gamesSet.Games
 {
     public static class Reversi
     {
-        private static UtilityLogic utilityLogic= new UtilityLogic();
+        private static UtilityLogic utilityLogic = new UtilityLogic();
         public static void InitGameSpecificParam(Dictionary<string, object> gameParams, GameSession gameSession)
         {
             gameParams["playerWithWhites"] = gameSession.UserCreator;
@@ -37,7 +38,7 @@ namespace gamesSet.Hubs
                 new List<int>(){1, 0 },
                 new List<int>(){1, 1 }
             };
-            foreach (var dir in directions) 
+            foreach (var dir in directions)
             {
                 var r = row + dir[0];
                 var c = col + dir[1];
@@ -46,8 +47,8 @@ namespace gamesSet.Hubs
                 while (
                     r >= 0 && r < 8 &&
                 c >= 0 && c < 8 &&
-                    state.Board[r,c] != ReversiColors.Free &&
-                    state.Board[r,c] != player
+                    state.Board[r, c] != ReversiColors.Free &&
+                    state.Board[r, c] != player
                 )
                 {
                     tempFlippedCells.Add(new List<int>() { r, c });
@@ -58,7 +59,7 @@ namespace gamesSet.Hubs
                 if (
                 r >= 0 && r < 8 &&
                     c >= 0 && c < 8 &&
-                    state.Board[r,c] == player
+                    state.Board[r, c] == player
                 )
                 {
                     flippedCells.AddRange(tempFlippedCells);
@@ -102,15 +103,15 @@ namespace gamesSet.Hubs
         public static void processMove(GameSession gameSession, string userName, int move)
         {
             var gameParams = JsonConvert.DeserializeObject<Dictionary<string, object>>(gameSession.GameParams);
-            var playerWhites = (string) gameParams["playerWithWhites"];
+            var playerWhites = (string)gameParams["playerWithWhites"];
             var playerBlacks = gameSession.UserCreator == playerWhites ? gameSession.SecondUser : gameSession.UserCreator;
             ReversiColors player = playerBlacks == userName ? ReversiColors.Black : ReversiColors.White;
 
             var stateJson = gameSession.GameState;
             var state = JsonConvert.DeserializeObject<ReversiState>(stateJson);
-            int row = move/state.Board.GetLength(0);
-            int col = move% state.Board.GetLength(0);
-            if (state.Board[row,col] != ReversiColors.Free)
+            int row = move / state.Board.GetLength(0);
+            int col = move % state.Board.GetLength(0);
+            if (state.Board[row, col] != ReversiColors.Free)
             {
                 return;
             }
@@ -124,7 +125,7 @@ namespace gamesSet.Hubs
             }
 
             //Update the board
-            for(int i = 0; i < flippedCells.Count; i++)
+            for (int i = 0; i < flippedCells.Count; i++)
             {
                 var indexesToFlip = flippedCells[i];
                 state.Board[indexesToFlip[0], indexesToFlip[1]] = player;
@@ -161,9 +162,9 @@ namespace gamesSet.Hubs
                 }
             }
 
-            if(nextPlayer == oppositePlayer)
+            if (nextPlayer == oppositePlayer)
             {
-                gameSession.NextMoveForUser = nextPlayer == ReversiColors.White? playerWhites: playerBlacks;
+                gameSession.NextMoveForUser = nextPlayer == ReversiColors.White ? playerWhites : playerBlacks;
             }
 
             //search winner
@@ -184,7 +185,7 @@ namespace gamesSet.Hubs
                 }
 
                 gameSession.Status = SessionStatus.finished;
-                gameSession.WinnerName= winner;
+                gameSession.WinnerName = winner;
             }
             gameSession.GameState = JsonConvert.SerializeObject(state);
         }

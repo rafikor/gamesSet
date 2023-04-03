@@ -1,25 +1,25 @@
 ﻿using gamesSet.Data;
 using gamesSet.Models;
 
-namespace gamesSet.Hubs
+namespace gamesSet.Utils
 {
     public class UtilitityDb
     {
         private IServiceProvider _sp;
         public UtilitityDb(IServiceProvider sp)
         {
-            _sp= sp;
+            _sp = sp;
         }
         public void CheckExpiredWaitingSessionAndCancel(GameSession session)
         {
-            if (session.Status == SessionStatus.created && (DateTime.UtcNow - session.CreationTime).TotalMinutes > session.ExpirationSessionSeconds/60)
+            if (session.Status == SessionStatus.created && (DateTime.UtcNow - session.CreationTime).TotalMinutes > session.ExpirationSessionSeconds / 60)
             {
                 session.Status = SessionStatus.cancelled;
                 UpdateSession(session);
             }
         }
 
-        public bool CheckIsExpiredActiveSessionMoveAndCancel(GameSession gameSession,UtilityLogic utilLogic)
+        public bool CheckIsExpiredActiveSessionMoveAndCancel(GameSession gameSession, UtilityLogic utilLogic)
         {
             if (gameSession.Status == SessionStatus.activeGame)
             {

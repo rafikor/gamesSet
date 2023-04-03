@@ -1,12 +1,13 @@
 ﻿using gamesSet.Models;
+using gamesSet.Utils;
 using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
 
-namespace gamesSet.Hubs
+namespace gamesSet.Games
 {
     public static class TicTacToe
     {
-        private static UtilityLogic utilityLogic= new UtilityLogic();
+        private static UtilityLogic utilityLogic = new UtilityLogic();
         public static void processMove(GameSession gameSession, string userName, int move)
         {
             var stateJson = gameSession.GameState;

@@ -1,6 +1,6 @@
 ﻿using gamesSet.Models;
 
-namespace gamesSet.Hubs
+namespace gamesSet.Utils
 {
     public class UtilityLogic
     {

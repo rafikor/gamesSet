@@ -11,6 +11,8 @@ using Newtonsoft.Json;
 using Microsoft.AspNetCore.SignalR;
 using gamesSet.Hubs;
 using static System.Collections.Specialized.BitVector32;
+using gamesSet.Games;
+using gamesSet.Utils;
 
 namespace gamesSet.Controllers
 {
