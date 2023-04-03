@@ -1,4 +1,5 @@
-import { Game, Tictactoe } from "./components/Tictactoe";
+import { Tictactoe } from "./components/Tictactoe";
+import { Game } from "./components/Game";
 import { Reversi } from "./components/Reversi";
 import { Home } from "./components/Home";
 

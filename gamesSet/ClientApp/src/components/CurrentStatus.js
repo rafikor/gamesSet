@@ -134,3 +134,18 @@ export function Timer({ deadlineDate, textWhenTimerIsNotExpired, textWhenTimeIsE
             </div>
     );
 };
+
+
+export function utcStringTimeToLocalTime(stringTime) {
+    let date = new Date(new Date(stringTime));
+    const milliseconds = Date.UTC(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        date.getHours(),
+        date.getMinutes(),
+        date.getSeconds(),
+    );
+    const localTime = new Date(milliseconds);
+    return localTime;
+}
