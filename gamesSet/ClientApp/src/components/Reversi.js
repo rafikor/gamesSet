@@ -6,6 +6,7 @@ export function Reversi() {
     const [board, setBoard] = useState(Array(8).fill(Array(8).fill(null)));
     const [player, setPlayer] = useState('black');
     const [winner, setWinner] = useState('');
+    const [additionalMessage, setAdditionalMessage] = useState('');
 
     useEffect(() => {
         const newBoard = board.map((rowArray, row) =>
@@ -28,13 +29,13 @@ export function Reversi() {
         setBoard(newBoard);
     }, []);
 
-    function handleClick(row, col,board, setBoard, setWinner) {
+    function tryMove(board, row, col, player) {
         if (board[row][col] !== null) {
-            return;
+            return [];
         }
 
         let flippedCells = [];
-        // Check in all 8 directions from the clicked cell for any opponent pieces
+        //Check in all 8 directions from the clicked cell for any opponent pieces
         const directions = [
             [-1, -1], [-1, 0], [-1, 1],
             [0, -1], [0, 1],
@@ -44,7 +45,7 @@ export function Reversi() {
             let r = row + dir[0];
             let c = col + dir[1];
             let tempFlippedCells = [];
-            // Check if the adjacent cell is an opponent piece
+            //Check if the adjacent cell is an opponent piece
             while (
                 r >= 0 && r < 8 &&
                 c >= 0 && c < 8 &&
@@ -64,6 +65,33 @@ export function Reversi() {
                 flippedCells.push(...tempFlippedCells);
             }
         }
+        //console.log('flippedCells inside')
+        //console.log(flippedCells)
+        //console.log(flippedCells.length)
+        return flippedCells;
+    }
+
+    function arePossibleMovesAvailable(board, player) {
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                let newMoves = tryMove(board, row, col, player)
+                //console.log(newMoves);
+                //console.log('flippedCells length')
+                //console.log(newMoves.length);
+                if (newMoves.length !=0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function handleClick(row, col,board, setBoard, setWinner) {
+        if (board[row][col] !== null) {
+            return;
+        }
+
+        let flippedCells = tryMove(board, row, col, player);
 
         //move is invalid
         if (flippedCells.length === 0) {
@@ -79,7 +107,28 @@ export function Reversi() {
             )
         );
         setBoard(newBoard);
-        setPlayer(player === 'black' ? 'white' : 'black');
+        let oldPlayer = player;
+        let oppositePlayer = player === 'black' ? 'white' : 'black'
+
+        let canContinue = true;
+        if (!arePossibleMovesAvailable(newBoard, oppositePlayer)) {
+            if (arePossibleMovesAvailable(newBoard, oldPlayer)) {
+                setPlayer(oldPlayer);
+                setAdditionalMessage('Move goes to ' + oldPlayer + ' again, because ' + oppositePlayer + 'can\'t move');
+            }
+            else {
+                canContinue = false;
+                if (newBoard.flat().filter(cell => cell === null).length !== 0) {
+                    setAdditionalMessage('No one player can move, end of the game');
+                }
+            }
+        }
+        else {
+            setPlayer(oppositePlayer);     
+            if (additionalMessage != '') {
+                setAdditionalMessage('');
+            }
+        }
 
         //search winner
         const flattenedBoard = newBoard.flat();
@@ -87,15 +136,16 @@ export function Reversi() {
         const numWhiteCells = flattenedBoard.filter(cell => cell === 'white').length;
         const numBlackCells = flattenedBoard.filter(cell => cell === 'black').length;
         let winner = null;
-        if (numEmptyCells === 0 || numWhiteCells === 0 || numBlackCells === 0) {
+        if (numEmptyCells === 0 || numWhiteCells === 0 || numBlackCells === 0 || !canContinue) {
             //If there are no empty cells or one color has no pieces, the game is over
             if (numWhiteCells === numBlackCells) {
                 winner = 'tie';
             } else {
                 winner = numWhiteCells > numBlackCells ? 'white' : 'black';
             }
+
+            setWinner(winner);
         }
-        setWinner(winner);
     }
 
     return (
@@ -124,6 +174,7 @@ export function Reversi() {
                         <p>{player === 'black' ? 'Black' : 'White'}'s turn</p>
                 )}
             </div>
+            <div>{additionalMessage}</div>
         </div>
     );
 }
