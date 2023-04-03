@@ -47,6 +47,10 @@ namespace gamesSet.Migrations
                     b.Property<DateTime>("LastMoveTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("NextMoveForUser")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("SecondUser")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

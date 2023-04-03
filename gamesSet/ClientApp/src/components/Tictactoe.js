@@ -28,19 +28,28 @@ const SessionStatus = {
     cancelled: 4
 }
 
-function CurrentStatus({ status, winnerName, userOfNextMove, currentPlayerName }) {
+function CurrentStatus({ status, winnerName, userOfNextMove, currentPlayerName, playerNames }) {
     let statusString;
+    let opponentName = ''
+    if (winnerName !== '') {
+        if (playerNames[0] === winnerName) {
+            opponentName = playerNames[1];
+        }
+        else { 
+            opponentName = playerNames[0];
+        }
+    }
     if (status === SessionStatus.created) {
         statusString = 'Waiting for any other player to connect...';
     }
     else {
         if (status === SessionStatus.finished) {
-            statusString = 'Game is ended. Winner: ' + winnerName;
+            statusString = 'Game is ended. Winner: ' + winnerName + '. Opponent was' + opponentName;
         }
         else {
             if (status === SessionStatus.cancelled) {
                 if (winnerName !== '') {
-                    statusString = 'Winner: ' + winnerName + " (opponent thought too long)";
+                    statusString = 'Winner: ' + winnerName + ' (opponent ' + opponentName+ ' thought too long)';
                 }
                 else {
                     statusString = 'Session is expired'
@@ -96,6 +105,7 @@ function Board({ squares, sendMove, disabled }) {
 export function Tictactoe() {
     const [searchParams, setSearchParams] = useSearchParams(window.location.search);
     const [userName, setUserName] = useState(searchParams.get("playerName"));
+    const [playerNames, setPlayerNames] = useState([]);
     const [sessionId, setSessionId] = useState(searchParams.get("gameSessionId"));
     const [canMove, setCanMove] = useState(false);
     const [userOfNextMove, setUserOfNextMove] = useState("");
@@ -103,19 +113,36 @@ export function Tictactoe() {
     const [winnerName, setWinnerName] = useState("");
     const [connection, setConnection] = useState(null);
 
+    const [playerWithX, setPlayerWithX] = useState("");
+
     const [boardValues, setBoardValues] = useState([Array(9).fill(null)]);
 
     useEffect(() => {
         const newConnection = new HubConnectionBuilder()
             .withUrl("/TicTacToeHub?userName=" + userName + "&gameSessionId=" + sessionId).build();
 
-        newConnection.on("ReceiveState", function (stateJson, localWinnerName, newStatus) {
-            var stateJsonParsed = JSON.parse(stateJson);
-            let userMove = stateJsonParsed['NextMoveForUser'];
+        newConnection.on("ReceiveState", function (sessionJson) {
+            let session = JSON.parse(sessionJson);
+            let localWinnerName = session["WinnerName"];
+            console.log('Xs ');
+            let newStatus = session["Status"];
+            let userMove = session['NextMoveForUser'];
             setStatus(newStatus);
+            var stateJsonParsed = JSON.parse(session["GameState"]);
+            console.log('Xs2 ');
+            console.log('Xs3 ');
             setUserOfNextMove(userMove);
             setCanMove(userMove == userName && newStatus==2);
             setWinnerName(localWinnerName);
+            console.log('Xs5 ');
+            let gameParams = JSON.parse(session["GameParams"]);
+
+            setPlayerWithX(gameParams["playerWithX"]);
+
+            playerNames.push(session["UserCreator"]);
+            playerNames.push(session["SecondUser"]);
+            setPlayerNames(playerNames)
+
             let newBoard = boardValues.slice();
             for (let i = 0; i < stateJsonParsed['Xs'].length; i++) {
                 newBoard[stateJsonParsed['Xs'][i]] = 'X';
@@ -149,11 +176,32 @@ export function Tictactoe() {
         }
     }
 
+    let whoIsWho = ''
+    if (playerNames[0] === userName || playerNames[1] === userName) {
+        if (playerWithX === userName) {
+            whoIsWho = 'Your are X';
+        }
+        else {
+            whoIsWho = 'Your are O';
+        }
+    }
+    else {
+        let opponent = '';
+        if (playerWithX == playerNames[0]) {
+            opponent = playerNames[1];
+        }
+        else {
+            opponent = playerNames[0];
+        }
+        whoIsWho = playerWithX + ' moves by X; ' + opponent + ' moves by O';
+    }
+
     return (
         <div className="game">
             <div className="game-board">
                 <CurrentStatus status={status} winnerName={winnerName}
-                    userOfNextMove={userOfNextMove} currentPlayerName={userName} />
+                    userOfNextMove={userOfNextMove} currentPlayerName={userName} playerNames={playerNames} />
+                <div>{whoIsWho}</div>
                 <Board squares={boardValues}
                     sendMove={sendMove} disabled={!canMove}/>
             </div>

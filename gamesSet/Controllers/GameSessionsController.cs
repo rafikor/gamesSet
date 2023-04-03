@@ -111,14 +111,15 @@ namespace gamesSet.Controllers
 
             var gameParams = new Dictionary<string, object>
             {
-                { "gameId", gameId }
+                { "gameId", gameId },
+                { "playerWithX", gameSession.UserCreator }
             };
 
             gameSession.GameParams = JsonConvert.SerializeObject(gameParams);
             gameSession.GameId = gameId;
+            gameSession.NextMoveForUser = "";
 
             var state = new TicTacToeState();
-            state.NextMoveForUser = "";
 
             var gameState = JsonConvert.SerializeObject(state);
             gameSession.GameState = gameState;

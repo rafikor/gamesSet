@@ -20,6 +20,8 @@ namespace gamesSet.Models
         public DateTime CreationTime { get; set; }
         public DateTime LastMoveTime { get; set; }
         public SessionStatus Status { get; set; }
+
+        public string NextMoveForUser { get; set; } = "";
     }
 
     public enum SessionStatus {created=1, activeGame,finished,cancelled};

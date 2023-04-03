@@ -47,10 +47,10 @@ namespace gamesSet.Hubs
                             session.SecondUser = userName;
                             session.Status = SessionStatus.activeGame;
                             session.LastMoveTime = DateTime.Now;
+                            session.NextMoveForUser = userName;
 
-                            var state = JsonConvert.DeserializeObject<TicTacToeState>(session.GameState);
-                            state.NextMoveForUser = userName;
-                            session.GameState = JsonConvert.SerializeObject(state);
+                            //var state = JsonConvert.DeserializeObject<TicTacToeState>(session.GameState);
+                            //session.GameState = JsonConvert.SerializeObject(state);
                         }
                         else
                         {
@@ -64,12 +64,10 @@ namespace gamesSet.Hubs
                
             Groups.AddToGroupAsync(Context.ConnectionId, GetUserDefGroupName(userName, sessionIdString));
 
-            SendState(userName, sessionIdString, session.GameState,
-                    session.WinnerName, (int)session.Status);
+            SendState(userName, session);
             if (session.Status == SessionStatus.activeGame)
             {
-                SendState(GetNamesOfOtherUsers(session, userName)[0], sessionIdString, session.GameState, 
-                    session.WinnerName, (int)session.Status);
+                SendState(GetNamesOfOtherUsers(session, userName)[0], session);
             }
 
             return base.OnConnectedAsync();
@@ -132,22 +130,10 @@ namespace gamesSet.Hubs
             return "userName_" + userName + "_sessionId_" + sessionId;
         }
 
-        public async Task SendCanMove(string userName, string sessionId, bool canMove)
+        public async Task SendState(string userName, GameSession session)
         {
-            var jsonToSend = JsonConvert.SerializeObject(canMove);
-            await _context.Clients.Group(GetUserDefGroupName(userName, sessionId)).SendAsync("ReceiveCanMove", jsonToSend);
-        }
-
-        public async Task SendState(string userName, string sessionId, string state, string winnerName, int status)
-        {
-            //   var gameSession = gameSessionRepository.GetGameSession(sessionId);
-            //   var state = gameSession.GameState;
-            //state["O"] = new List<int>() {1,3 };
-            //state["S"] = new List<int>() { 2, 5 };
-            //state["NextMoveForUser"] = "userName";
-            //var jsonToSend = JsonConvert.SerializeObject(state);
-            GameSession f = new GameSession();
-            await _context.Clients.Group(GetUserDefGroupName(userName, sessionId)).SendAsync("ReceiveState", state, winnerName, status);
+            var jsonToSend = JsonConvert.SerializeObject(session);
+            await _context.Clients.Group(GetUserDefGroupName(userName, session.Id.ToString())).SendAsync("ReceiveState", jsonToSend);
         }
 
         public async Task ReceiveMove(string userName, string sessionIdString, int move)
@@ -177,9 +163,9 @@ namespace gamesSet.Hubs
                     {
                         state.Xs.Add(move);
                     }
-                    state.NextMoveForUser = GetNamesOfOtherUsers(gameSession, userName)[0];
-
                     gameSession.GameState = JsonConvert.SerializeObject(state);
+
+                    gameSession.NextMoveForUser = GetNamesOfOtherUsers(gameSession, userName)[0];
 
                     string winner = checkWinner(state);
                     if (winner == "O")
@@ -200,10 +186,8 @@ namespace gamesSet.Hubs
                 }
                 UpdateSession(gameSession);
 
-                SendState(gameSession.UserCreator, sessionIdString, gameSession.GameState,
-                        gameSession.WinnerName, (int)gameSession.Status);
-                SendState(gameSession.SecondUser, sessionIdString, gameSession.GameState,
-                        gameSession.WinnerName, (int)gameSession.Status);
+                SendState(gameSession.UserCreator, gameSession);
+                SendState(gameSession.SecondUser, gameSession);
             }
         }
 
