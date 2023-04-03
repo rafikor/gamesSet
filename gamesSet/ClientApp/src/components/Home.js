@@ -116,9 +116,9 @@ export function Home() {
         <div>
             <InputUser />
             <GamesListToCreateSession games={[{ gameName: "Tick-Tack-Toe" }, { gameName: "Reversi" }]} />
-            <SessionsToList sessions={createdSessions} title='Created sessions (you can connect and play):'
+            <SessionsToList sessions={createdSessions} title='Created sessions (you can connect and play)'
                 isCheckUserName={true} getSessionButtonTitle={getCreatedSessionButtonTitle} />
-            <SessionsToList sessions={activeSessions} title='Actively played sessions (you can connect and watch):'
+            <SessionsToList sessions={activeSessions} title='Actively played sessions (you can connect and watch)'
                 isCheckUserName={false} getSessionButtonTitle={getActiveSessionButtonTitle} />
         </div>
     );
