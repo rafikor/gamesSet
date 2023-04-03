@@ -10,7 +10,7 @@ export const SessionStatus = {
 }
 
 
-function getOpponent(playerNames, playerName) {
+export function getOpponent(playerNames, playerName) {
     let opponentName;
     if (playerNames[0] === playerName) {
         opponentName = playerNames[1];

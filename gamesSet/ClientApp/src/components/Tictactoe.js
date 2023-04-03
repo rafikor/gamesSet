@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from "react-router-dom";
 import { HubConnectionBuilder } from '@microsoft/signalr';
 
-import { CurrentStatus, Timer, SessionStatus } from './CurrentStatus';
+import { CurrentStatus, Timer, SessionStatus, getOpponent } from './CurrentStatus';
 
 const styleButton = {
     background: "lightblue",
@@ -67,6 +67,73 @@ function utcStringTimeToLocalTime(stringTime) {
     return localTime;
 }
 
+const sendMoveFunc = async (connection, userName, sessionId, move) => {
+    try {
+        await connection.send('ReceiveMove', userName, sessionId, move);
+    }
+    catch (e) {
+        console.log(e);
+    }
+}
+
+function getWhoIsWhoTicTacToe(playerNames, userName, status, playerWithO) {
+    let ifUserInPlayerList = playerNames[0] === userName || playerNames[1] === userName;
+    let whoIsWho = '';
+    if (ifUserInPlayerList) {
+        if (playerWithO === userName) {
+            whoIsWho = 'your are O';
+        }
+        else {
+            whoIsWho = 'your are X';
+        }
+        if (status !== SessionStatus.finished && status !== SessionStatus.created) {
+            let opponentAddition = getOpponent(playerNames, userName);
+            whoIsWho = opponentAddition + ' is opponent, ' + whoIsWho;
+        }
+    }
+    else {
+        let opponent = getOpponent(playerNames, playerWithO);
+        whoIsWho = playerWithO + ' moves by O; ' + (!opponent ? 'other player ' : opponent) + ' moves by X';
+    }
+    return whoIsWho;
+}
+
+export function TictactoeSmall({ connection, userName, sessionId,
+    playerNames, gameState, gameParams, status, canMove }) {
+    
+    const [playerWithO, setPlayerWithO] = useState("");
+    const [boardValues, setBoardValues] = useState([Array(9).fill(null)]);
+
+    useEffect(() => {
+        setPlayerWithO(gameParams["playerWithO"]);
+
+        let newBoard = boardValues.slice();
+        for (let i = 0; i < gameState['Xs'].length; i++) {
+            newBoard[gameState['Xs'][i]] = 'X';
+        }
+        for (let i = 0; i < gameState['Os'].length; i++) {
+            newBoard[gameState['Os'][i]] = 'O';
+        }
+        setBoardValues(newBoard);
+    }, [gameState]);
+
+    const sendMove = async (move) => {
+        sendMoveFunc(connection, userName, sessionId, move);
+    }
+
+    let whoIsWho = getWhoIsWhoTicTacToe(playerNames, userName, status, playerWithO);
+
+    return (
+        <div className="game">
+            <div className="game-board">
+                <div>{whoIsWho}</div>
+                <Board squares={boardValues}
+                    sendMove={sendMove} disabled={!canMove}/>
+            </div>
+        </div>
+    );
+}
+
 export function Tictactoe() {
     const [searchParams, setSearchParams] = useSearchParams(window.location.search);
     const [userName, setUserName] = useState(searchParams.get("playerName"));
@@ -81,10 +148,8 @@ export function Tictactoe() {
     const [deadlineTime, setDeadlineTime] = useState(null);
     const [messageBeforeDeadline, setMessageBeforeDeadline] = useState("");
     const [messageAfterDeadline, setMessageAfterDeadline] = useState("");
-
-    const [playerWithO, setPlayerWithO] = useState("");
-
-    const [boardValues, setBoardValues] = useState([Array(9).fill(null)]);
+    const [gameState, setGameState] = useState(null);
+    const [gameParams, setGameParams] = useState(null);
 
     useEffect(() => {
         let inputName = userName;
@@ -98,12 +163,10 @@ export function Tictactoe() {
         newConnection.on("ReceiveState", function (sessionJson) {
             let session = JSON.parse(sessionJson);
             let localWinnerName = session["WinnerName"];
-            console.log('Xs ');
             let newStatus = session["Status"];
             let userMove = session['NextMoveForUser'];
 
             setStatus(newStatus);
-
 
             if (newStatus == SessionStatus.created) {
                 let localTime = utcStringTimeToLocalTime(session['CreationTime']);
@@ -125,30 +188,19 @@ export function Tictactoe() {
                 }
             }
 
-            var stateJsonParsed = JSON.parse(session["GameState"]);
-            console.log('Xs2 ');
-            console.log('Xs3 ');
             setUserOfNextMove(userMove);
             setCanMove(userMove == inputName && newStatus == SessionStatus.activeGame);
             setWinnerName(localWinnerName);
-            console.log('Xs5 ');
-            let gameParams = JSON.parse(session["GameParams"]);
-
-            setPlayerWithO(gameParams["playerWithO"]);
 
             let newPlayerNames = [];
             newPlayerNames.push(session["UserCreator"]);
             newPlayerNames.push(session["SecondUser"]);
             setPlayerNames(newPlayerNames)
 
-            let newBoard = boardValues.slice();
-            for (let i = 0; i < stateJsonParsed['Xs'].length; i++) {
-                newBoard[stateJsonParsed['Xs'][i]] = 'X';
-            }
-            for (let i = 0; i < stateJsonParsed['Os'].length; i++) {
-                newBoard[stateJsonParsed['Os'][i]] = 'O';
-            }
-            setBoardValues(newBoard);
+            var gameState = JSON.parse(session["GameState"]);
+            setGameState(gameState);
+            let gameParams = JSON.parse(session["GameParams"]);
+            setGameParams(gameParams);
         });
 
         newConnection.start({ withCredentials: false }).then(function () {
@@ -164,64 +216,22 @@ export function Tictactoe() {
         };
     }, []);
 
-    const sendMove = async (move) => {
-        try {
-            await connection.send('ReceiveMove', userName, sessionId, move);
-            console.log('Send move ' + move);
-        }
-        catch (e) {
-            console.log(e);
-        }
-    }
-
-    let whoIsWho = ''
-    if (playerNames[0] === userName || playerNames[1] === userName) {
-        if (playerWithO === userName) {
-            whoIsWho = 'your are O';
-        }
-        else {
-            whoIsWho =  'your are X';
-        }
-        let opponentAddition = '';
-        if (status !== SessionStatus.finished) {
-            if (playerNames[0] === userName) {
-                opponentAddition = playerNames[1];
-            }
-            else {
-                opponentAddition = playerNames[0];
-            }
-            if (opponentAddition) {
-                whoIsWho = opponentAddition + ' is opponent, ' + whoIsWho;
-            }
-        }
-    }
-    else {
-        let opponent = '';
-        if (playerWithO == playerNames[0]) {
-            opponent = playerNames[1];
-        }
-        else {
-            opponent = playerNames[0];
-        }
-        whoIsWho = playerWithO + ' moves by O; ' + (!opponent ? 'other player ' : opponent) + ' moves by X';
-    }
-    //creationSessionTime && console.log(creationSessionTime);
-    //let creationSessionTimeObj = creationSessionTime ? new Date(creationSessionTime):null;
-    //creationSessionTimeObj && console.log(creationSessionTimeObj.getTime());
     return (
-        <div className="game">
+        <div>
+            <CurrentStatus status={status} winnerName={winnerName}
+                userOfNextMove={userOfNextMove} currentPlayerName={userName}
+                playerNames={playerNames} />
             {deadlineTime &&
                 <Timer deadlineDate={deadlineTime}
-                    textWhenTimerIsNotExpired={messageBeforeDeadline} textWhenTimeIsExpired={messageBeforeDeadline} />
+                textWhenTimerIsNotExpired={messageBeforeDeadline}
+                textWhenTimeIsExpired={messageAfterDeadline} />
             }
-            <div className="game-board">
-                <CurrentStatus status={status} winnerName={winnerName}
-                    userOfNextMove={userOfNextMove} currentPlayerName={userName} playerNames={playerNames} />
-                <div>{whoIsWho}</div>
-                <Board squares={boardValues}
-                    sendMove={sendMove} disabled={!canMove}/>
-            </div>
-            
+            {connection && gameState && 
+                <TictactoeSmall connection={connection} userName={userName}
+                    sessionId={sessionId} playerNames={playerNames}
+                    gameState={gameState} gameParams={gameParams}
+                    status={status} canMove={canMove} />
+            }
         </div>
-    );
+        )
 }
