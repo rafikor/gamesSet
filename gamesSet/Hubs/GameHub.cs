@@ -28,7 +28,7 @@ namespace gamesSet.Hubs
 
             bool isSpectator = false;
 
-            util.CheckExpiredWaitingSession(session);
+            util.CheckExpiredWaitingSessionAndCancel(session);
             //userName=="null" - no name, it is spectator
             if (userName != "null" && session.Status == SessionStatus.created)
             {
@@ -50,8 +50,6 @@ namespace gamesSet.Hubs
                             session.LastMoveTime = DateTime.UtcNow;
                             session.NextMoveForUser = userName;
 
-                            //var state = JsonConvert.DeserializeObject<TicTacToeState>(session.GameState);
-                            //session.GameState = JsonConvert.SerializeObject(state);
                         }
                         else
                         {
@@ -121,13 +119,9 @@ namespace gamesSet.Hubs
             int sessionId = Convert.ToInt32(sessionIdString);
             var gameSession = util.FindSession(sessionId);
             if (gameSession.Status == SessionStatus.activeGame)
-            {
-
-                if ((DateTime.UtcNow - gameSession.LastMoveTime).TotalMinutes > 2)//TODO
+            {   
+                if(util.CheckIsExpiredActiveSessionMoveAndCancel(gameSession, utilLogic))
                 {
-                    gameSession.Status = SessionStatus.cancelled;
-                    gameSession.WinnerName = utilLogic.GetNamesOfOtherUsers(gameSession, userName)[0];
-                    util.UpdateSession(gameSession);
                     return;
                 }
                 else

@@ -82,42 +82,65 @@ namespace gamesSet.Controllers
             return Redirect($"/{gameAddress}?gameSessionId={gameSession.Id}&playerName={userName}");
         }
 
-        [HttpPost]
-        public Dictionary<int, Dictionary<string, string>> GetWaitingGameSessions()
+        private Dictionary<string, string> prepareDataForCreatedSessionToSend(GameSession session)
         {
-            var newSessions = _context.GameSession.Where(x=>x.Status == SessionStatus.created);
+            var dataForGame = new Dictionary<string, string>();
 
-            var dataToSend = new Dictionary<int, Dictionary<string,string> > ();
+            string gameName = "";
+            switch (session.GameId)//TODO: refactor
+            {
+                case 0:
+                    gameName = "TicTacToe";
+                    break;
+                case 1:
+                    gameName = "Reversi";
+                    break;
+                default:
+                    throw new Exception("Not implemented");
+            }
+
+            dataForGame["gameName"] = gameName;
+            dataForGame["creator"] = session.UserCreator;
+            dataForGame["gameId"] = session.GameId.ToString();
+            dataForGame["secondUser"] = session.SecondUser;
+
+            return dataForGame;
+        }
+
+        public Dictionary<int, Dictionary<string, string>> GetDataForSpecifiedGameSessions(SessionStatus status)
+        {
+            var newSessions = _context.GameSession.Where(x => x.Status == status);
+
+            var dataToSend = new Dictionary<int, Dictionary<string, string>>();
             var tempUtil = new UtilitityDb(_sp);
+            var tempUtilLogic = new UtilityLogic();
             foreach (var session in newSessions)
             {
-                tempUtil.CheckExpiredWaitingSession(session);
-                if (session.Status == SessionStatus.cancelled)
+                tempUtil.CheckExpiredWaitingSessionAndCancel(session);
+                tempUtil.CheckIsExpiredActiveSessionMoveAndCancel(session, tempUtilLogic);
+                    if (session.Status == SessionStatus.cancelled)
                 {
                     continue;
                 }
-                var dataForGame = new Dictionary<string, string>();
-                
-                string gameName = "";
-                switch (session.GameId)//TODO: refactor
-                {
-                    case 0:
-                        gameName = "TicTacToe";
-                        break;
-                    case 1:
-                        gameName = "Reversi";
-                        break;
-                    default:
-                        throw new Exception("Not implemented");
-                }
-
-                dataForGame["gameName"] = gameName;
-                dataForGame["creator"] = session.UserCreator;
-                dataForGame["gameId"] = session.GameId.ToString();
+                var dataForGame = prepareDataForCreatedSessionToSend(session);
                 dataToSend[session.Id] = dataForGame;
             }
             return dataToSend;
         }
-        
+
+        [HttpPost]
+        public Dictionary<int, Dictionary<string, string>> GetWaitingGameSessions()
+        {
+            var dataToSend = GetDataForSpecifiedGameSessions(SessionStatus.created);
+            return dataToSend;
+        }
+
+        [HttpPost]
+        public Dictionary<int, Dictionary<string, string>> GetActiveGameSessions()
+        {
+            var dataToSend = GetDataForSpecifiedGameSessions(SessionStatus.activeGame);
+            return dataToSend;
+        }
+
     }
 }
